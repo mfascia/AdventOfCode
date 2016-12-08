@@ -6,74 +6,66 @@ def read_input_stream(filename):
     stream = map(lambda x: x.strip(" \n\t"), raw)
     return stream
 
-def main(input_stream):
-    transposed = []
-    for i in xrange(0, len(input_stream[0])):
-        rot_text = ""
-        for j in xrange(0, len(input_stream)):  
-            rot_text += input_stream[j][i]
-        transposed.append(rot_text)
+def main_1(input_stream):
+    count = 0
+    for line in input_stream:
+        inside_brackets = False
+        has_reverse_sequence = False
+        for i in xrange(3, len(line)):
+            if line[i] == "[":
+                inside_brackets = True
+            elif line[i] == "]":
+                inside_brackets = False
+            else:
+                if (line[i-3] == line [i]) and (line[i-1] == line[i-2]) and (line[i] != line[i-1]):
+                    if inside_brackets:
+                        has_reverse_sequence = False
+                        break
+                    else:
+                        has_reverse_sequence = True
+        
+        if has_reverse_sequence:
+            count +=1
 
-    for line in transposed:
-        freq = {}
-        for c in line:
-             freq[c] = freq.get(c, 0) + 1
+    print count
 
-        sorted = []
-        for k, v in freq.iteritems():
-            sorted.append([k, v])
+def main_2(input_stream):
+    count = 0
+    for line in input_stream:
+        inside_brackets = False
+        in_aba = []
+        out_aba = []
+        for i in xrange(2, len(line)):
+            if line[i] == "[":
+                inside_brackets = True
+            elif line[i] == "]":
+                inside_brackets = False
+            else:
+                if (line[i-2] == line [i]) and (line[i] != line[i-1]):
+                    if inside_brackets:
+                        in_aba.append(line[i-2:i+1])
+                    else:
+                        out_aba.append(line[i-2:i+1])
+        
+        #if len(in_aba) > 0 or len(out_aba) >0:
+        #    print in_aba, out_aba
 
-        sorted.sort(key=lambda x: x[1], reverse=1)
-        most_common = sorted[0][0]
+        for i in out_aba:
+            for j in in_aba:
+                if i[0] == j[1] and i[1] == j[0]:
+                    print in_aba, out_aba
+                    count +=1
+                    print i, j
+                    break
 
-        sorted.sort(key=lambda x: x[1], reverse=0)
-        least_common = sorted[0][0]
-
-        print most_common, least_common
+    print count
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_6_input.txt")
-    main(input_stream)
+    input_stream = read_input_stream("AoC_7_input.txt")
+    main_1(input_stream)
+    print
+    main_2(input_stream)
 
 
 '''
---- Day 6: Signals and Noise ---
-
-Something is jamming your communications with Santa. Fortunately, your signal is only partially jammed, and protocol in situations like this is to switch to a simple repetition code to get the message through.
-
-In this model, the same message is sent repeatedly. You've recorded the repeating message signal (your puzzle input), but the data seems quite corrupted - almost too badly to recover. Almost.
-
-All you need to do is figure out which character is most frequent for each position. For example, suppose you had recorded the following messages:
-
-eedadn
-drvtee
-eandsr
-raavrd
-atevrs
-tsrnev
-sdttsa
-rasrtv
-nssdts
-ntnada
-svetve
-tesnvt
-vntsnd
-vrdear
-dvrsen
-enarar
-
-The most common character in the first column is e; in the second, a; in the third, s, and so on. Combining these characters returns the error-corrected message, easter.
-
-Given the recording in your puzzle input, what is the error-corrected version of the message being sent?
-
-Your puzzle answer was agmwzecr.
---- Part Two ---
-
-Of course, that would be the message - if you hadn't agreed to use a modified repetition code instead.
-
-In this modified code, the sender instead transmits what looks like random data, but for each character, the character they actually want to send is slightly less likely than the others. Even after signal-jamming noise, you can look at the letter distributions in each column and choose the least common letter to reconstruct the original message.
-
-In the above example, the least common character in the first column is a; in the second, d, and so on. Repeating this process for the remaining characters produces the original message, advent.
-
-Given the recording in your puzzle input and this new decoding methodology, what is the original message that Santa is trying to send?
 '''
