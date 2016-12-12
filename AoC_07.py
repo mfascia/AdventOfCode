@@ -60,7 +60,7 @@ def main_2(input_stream):
     print count
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_7_input.txt")
+    input_stream = read_input_stream("AoC_07_input.txt")
     main_1(input_stream)
     print
     main_2(input_stream)

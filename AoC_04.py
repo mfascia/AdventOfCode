@@ -56,5 +56,5 @@ def main(input_stream):
             print plain, str(room[1])
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_4_input.txt")
+    input_stream = read_input_stream("AoC_04_input.txt")
     main(input_stream)
