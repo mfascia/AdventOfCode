@@ -71,6 +71,10 @@ def check_floor(floor):
     return True
 
 
+# favor moving 2 items up over just one
+# favor moving 1 item down over just two
+# if moving a gen/chip pair, don't bother with any other pair
+
 def next_valid_states_from_state(state):
     elevator = state["elevator"]
     floors = state["floors"]     
