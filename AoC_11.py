@@ -1,200 +1,170 @@
 import sys
+import copy
 import itertools
-
-input_string = '''The first floor contains a polonium generator, a thulium generator, a thulium-compatible microchip, a promethium generator, a ruthenium generator, a ruthenium-compatible microchip, a cobalt generator, and a cobalt-compatible microchip.
-The second floor contains a polonium-compatible microchip and a promethium-compatible microchip.
-The third floor contains nothing relevant.
-The fourth floor contains nothing relevant.'''
-
-initial_state = {
-    "floors": [
-        [ "Pol_Gene", "Thu_Gene", "Thu_Chip", "Pro_Gene", "Rut_Gene", "Rut_Chip", "Cob_Gene", "Cob_Chip" ], # Floor 1 = Elevator 0
-        [ "Pol_Chip", "Pro_Chip"],                                                                          # Floor 2 = Elevator 1
-        [],                                                                                                 # Floor 3 = Elevator 2
-        []],                                                                                                 # Floor 4 = Elevator 3
-    "elevator": 0
-}
-
-'''The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
-The second floor contains a hydrogen generator.
-The third floor contains a lithium generator.
-The fourth floor contains nothing relevant.'''
-test_state = { 
-    "floors": [  
-        [ "Hyd_Chip", "Lit_Chip"],
-        [ "Hyd_Gene"],
-        [ "Lit_Gene"],
-        [] ],
-    "elevator": 0
-}
-
-test_state2 = { 
-    "floors": [  
-        [],
-        [],
-        [ "Hyd_Gene", "Hyd_Chip", "Lit_Gene"],
-        [ "Lit_Chip"] ],
-    "elevator": 2
-}
+from Queue import PriorityQueue
 
 
-def print_state(state):
-    print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-    for i in reversed(xrange(0, len(state["floors"]))):
-        print "F" + str(i) + (" | E |" if state["elevator"] == i else "      ") + " " + " ".join(state["floors"][i])
-    print "=============================================================="
+materials = ["polonium", "thulium", "promethium", "ruthenium", "cobalt", "elerium", "dilithium"]
+materials_short = ["pol", "thu", "pro", "rut", "cob", "ele", "dil"]
+
+init_floors_test = [
+#   generator       microchip
+    1,              0,          # polonium
+    2,              0,          # thulium
+]
+
+
+init_floors_1 = [
+#   generator       microchip
+    0,              1,          # polonium
+    0,              0,          # thulium
+    0,              1,          # promethium
+    0,              0,          # ruthenium
+    0,              0,          # cobalt
+]
+
+init_floors_2 = [
+#   generator       microchip
+    0,              1,          # polonium
+    0,              0,          # thulium
+    0,              1,          # promethium
+    0,              0,          # ruthenium
+    0,              0,          # cobalt
+    0,              0,          # elerium
+    0,              0,          # dilithium
+]
+
+init_elevator = 0
+
+# state = [ floors, lift_pos ]
+
+
+def print_state(state, elevator):
+    print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    for i in xrange(3, -1, -1):
+        text = "" 
+        text += "F" + str(i) + (" | E | " if elevator == i else " |   | ")
+        for j in xrange(0, len(state)):
+            if state[j] == i:
+                text += materials_short[j/2] + ("_G" if j%2==0 else "_P") + " "
+            else:
+                text += "      " 
+        print text
+    print "=================================================================================="
     print
 
 
-def cost(state):
-    c = (len(state["floors"][2]) + 2*len(state["floors"][1]) + 3*len(state["floors"][0]) + 3 - state["elevator"])
-    return c * c
-
-def is_goal_state(state):
-    return len(state["floors"][0])==0 and len(state["floors"][1])==0 and len(state["floors"][2])==0 and len(state["floors"][3])>0
-
-def conform_state(state):
-    state["floors"] = [sorted(f) for f in state["floors"]] 
+def is_goal(state):
+    return len(state) * 3 == sum(state)
 
 
-def check_floor(floor):
- 
-    joined = " ".join(floor)
-    if not "Gene" in joined:
-        return True
+def next_valid_states(building):
+    state = building[0]
+    elevator = building[1]
 
-    for item in floor:
-        if "Chip" in item:
-            matching_gen = item.split("_")[0] + "_Gene"
-            if not matching_gen in floor:
-                return False
+    on_floor = []
+    for i in xrange(0, len(state)):
+        if state[i] == elevator:
+            on_floor.append(i)
+
+    possible_moves = [list(i) for i in itertools.combinations(on_floor, 2)] + [[i] for i in on_floor]
+
+    valid_next_states = []
+    for move in possible_moves:
+        if elevator < 3:
+            new_state = copy.deepcopy(state)
+            for item in move:
+                if new_state[item] == elevator:
+                    new_state[item] += 1
+            if check_state(new_state):
+                valid_next_states.append([new_state, elevator+1])
+        
+        if elevator > 0:
+            new_state = copy.deepcopy(state)
+            for item in move:
+                if new_state[item] == elevator:
+                    new_state[item] -= 1
+            if check_state(new_state):
+                valid_next_states.append([new_state, elevator-1])
+
+    return valid_next_states
+
+
+def cost(building):
+    state = building[0]
+    c = len(state) * 3 - sum(state)
+    return c*c
+
+
+def check_state(state):
+    generators = state[0::2]
+    chips = state[1::2]
+    for i in xrange(0, len(chips)):
+        if chips[i] in generators and generators[i] != chips[i]:
+            return False 
+    
     return True
 
 
-# favor moving 2 items up over just one
-# favor moving 1 item down over just two
-# if moving a gen/chip pair, don't bother with any other pair
+def cost_one(a, b):
+    return 1
 
-def next_valid_states_from_state(state):
-    elevator = state["elevator"]
-    floors = state["floors"]     
-    floor = floors[elevator]
-    next_states = []
-    all_move_candidates = [[i] for i in floor] + [list(i) for i in itertools.combinations(floor, 2)]
+def hash_building(build):
+    return hash( (tuple(build[0]), build[1]) )
 
-    min_floor = 0
-    for f in xrange(0, elevator):
-        min_floor = f
-        if len(floors[f]):
+
+def astar_pathfind(start, neighbours_fn, cost_fn, heuristic_fn):
+    frontier = PriorityQueue()
+    frontier.put(start, 0)
+    came_from = {}
+    cost_so_far = {}
+    hash = hash_building(start)
+    came_from[hash] = None
+    cost_so_far[hash] = 0
+
+    while not frontier.empty():
+        current = frontier.get()
+        hash_current = hash_building(current)
+
+        if is_goal(current[0]):
             break
 
-    # elevator going up
-    if elevator < 3:
-        for move in all_move_candidates:
-            new_src_floor = [item for item in floor if item not in move]
-            new_dst_floor = floors[elevator + 1] + move
-            if check_floor(new_src_floor) and check_floor(new_dst_floor):
-                next_floors = [f for f in floors]
-                next_floors[elevator] = new_src_floor
-                next_floors[elevator + 1] = new_dst_floor
-                next_state = { "floors": next_floors, "elevator": elevator + 1}
-                conform_state(next_state)
-                next_states.append(next_state) 
-                #print_state(next_state)
+        neighbours = neighbours_fn(current) 
+        for next in neighbours:
+            hash_next = hash_building(next)
+            new_cost = cost_so_far[hash_current] + cost_fn(current, next)
+            if hash_next not in cost_so_far or new_cost < cost_so_far[hash_next]:
+                cost_so_far[hash_next] = new_cost
+                priority = new_cost + heuristic_fn(next)
+                frontier.put(next, priority)
+                came_from[hash_next] = current
 
-    # elevator going down
-    if elevator > min_floor:
-        for move in all_move_candidates:
-            new_src_floor = [item for item in floor if item not in move]
-            new_dst_floor = floors[elevator - 1] + move
-            if check_floor(new_src_floor) and check_floor(new_dst_floor):
-                next_floors = [f for f in floors]
-                next_floors[elevator] = new_src_floor
-                next_floors[elevator - 1] = new_dst_floor
-                next_state = { "floors": next_floors, "elevator": elevator - 1}
-                conform_state(next_state)
-                next_states.append(next_state) 
-                #print_state(next_state)
+    path = [current]
+    while current != start: 
+        hash_current = hash_building(current)
+        current = came_from[hash_current]
+        path.append(current)
+    path.reverse() 
 
-    return next_states
+    return path
 
 
-def make_node(state, parent):
-    c = cost(state)
-    g = (parent["g"] + 1) if parent else 1
-    return {
-        "state": state, 
-        "parent": parent, 
-        "g": g, 
-        "h": c,
-        "f": g + c,
-        }
+def main(state, elevator):
 
-
-def print_path(node):
-    print "=== PATH =========================="
-    path = []
-    while node["parent"]:
-        path.append(node["state"])
-        node = node["parent"]
-    for p in reversed(path):
-        print_state(p)
-    print "Length:", str(len(path))
-
-
-def search(state):
-    close_list = []
-    open_list = [make_node(state, None)]
+    path = astar_pathfind([state, 0], next_valid_states, cost_one, cost)
     
-    loop = True
-    while loop and len(open_list):
-        
-        print str(len(open_list)), str(len(close_list))
-
-        open_list = sorted(open_list, key=lambda x: x["f"], reverse=True)
-        curr = open_list.pop()
-
-        neighbours = next_valid_states_from_state(curr["state"])
-        new_nodes = [make_node(neighbour, curr) for neighbour in neighbours]
-        for nn in new_nodes:
-            skip = False
-            if is_goal_state(nn["state"]):
-                loop = False
-                print_path(nn)
-                break
-        
-            for oln in open_list:
-                if nn["state"] == oln["state"] and oln["f"] < nn["f"]:
-                    skip = True
-                    break
-            if skip:
-                continue 
-
-            for cln in close_list:
-                if nn["state"] == cln["state"] and cln["f"] < nn["f"]:
-                    skip = True
-                    break
-            if skip:
-                continue 
-
-            open_list.append(nn)
-        close_list.append(curr)
-    print "Search is over"
-
-
-def main_1():
-    conform_state(initial_state)
-    print_state(initial_state)
-    search(initial_state)
+    print "=== PATH =========================="
+    print "Path len:", str(len(path)-1)    
+    for p in path:
+        print_state(p[0], p[1])
 
 def main_2():
     pass
 
 
 if __name__ == "__main__":
-    main_1()
-    print
-    main_2()
+    print_state(init_floors_1, init_elevator)
+    main(init_floors_1, init_elevator)
 
 
 '''
