@@ -17,6 +17,7 @@ def main_2():
 		floor += 1 if c == "(" else -1
 		if floor == -1:
 			print "Reached level -1 at " + str(i)
+			break
 		i += 1
 
 
