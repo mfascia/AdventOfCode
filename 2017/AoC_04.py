@@ -65,8 +65,6 @@ def main_2(inp):
 
 if __name__ == "__main__":
     
-    is_anagram("aaa", "abc")
-
     inp = ""
     if len(inp) == 0:
         inp = read_input_file(sys.argv[0].replace(".py", "_input.txt"))
