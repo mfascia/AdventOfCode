@@ -8,6 +8,7 @@ def read_input_file(filename):
     stream = map(lambda x: x.strip(" \n\t"), raw)
     return stream
 
+
 def aggregate_weight(node, tree, weights):
     w = 0
     sub_w = []
