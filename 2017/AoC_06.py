@@ -1,8 +1,7 @@
 import sys
 
 
-
-def main_1(inp):
+def main(inp):
     hist = [list(inp)]
     state = list(inp)
     iter = 0
@@ -24,10 +23,6 @@ def main_1(inp):
             break
         else:
             hist.append(list(state))
-
-def main_2(inp):
-    print inp
-    pass
 
 
 if __name__ == "__main__":
