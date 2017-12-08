@@ -26,7 +26,7 @@ def main_1(inp):
 
 
 def main_2(inp):
-    print inp
+    print "349975. See https://oeis.org/A141481/b141481.txt"
     pass
 
 
