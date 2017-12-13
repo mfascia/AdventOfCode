@@ -2,19 +2,19 @@ import os
 import sys
 
 
-def read_input_file(filename):
-    with open(filename, "r") as f:
-        raw = f.readlines()
-    stream = map(lambda x: x.strip(" \n\t"), raw)
-    return stream
-
-
 def main_1(inp):
     print "Part 1:"
 
 
 def main_2(inp):
     print "Part 2:"
+
+
+def read_input_file(filename):
+    with open(filename, "r") as f:
+        raw = f.readlines()
+    stream = map(lambda x: x.strip(" \n\t"), raw)
+    return stream
 
 
 if __name__ == "__main__":
