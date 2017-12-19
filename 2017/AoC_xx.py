@@ -37,13 +37,14 @@ if __name__ == "__main__":
         inp = read_input_file(sys.argv[0].replace(".py", "_input.txt"))
 
     # run tests
-    print "--------------------------------------"
-    print "- TESTS"
-    print "--------------------------------------"
-    for test in tests:
-        main_1(test)
-        main_2(test)
-        print "---"
+    if True:
+        print "--------------------------------------"
+        print "- TESTS"
+        print "--------------------------------------"
+        for test in tests:
+            main_1(test)
+            main_2(test)
+            print "---"
 
     if False:
         print "--------------------------------------"
