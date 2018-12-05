@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+from PIL import Image
 
 
 def generate_perms(p):
@@ -70,6 +71,14 @@ def print_image(image):
         print "".join(image[y])
 
 
+def save_image(image, name):
+    im = Image.new(mode="1", size=(len(image), len(image)))
+    for y in xrange(0, len(image)):
+        for x in xrange(0, len(image)):
+            im.putpixel((x, y), 1 if image[y][x] == "#" else 0)
+    im.save(name)
+
+
 def count_image_lit_pixels(image):
     count = 0
     for y in xrange(0, len(image)):
@@ -117,7 +126,13 @@ def main(inp, loops):
         print "-------------------------------"
         grownBlocks = evolve_blocks(blocks, rules)
         image = blocks_to_image(grownBlocks)
-        print_image(image)
+        
+        #print_image(image)
+        
+        # write images on disk
+        #n = sys.argv[0].replace(".py", "_" + str(i) + ".png")
+        #save_image(image, n)
+        
         blocks = image_to_blocks(image)
         lit = count_image_lit_pixels(image)
         print ">>>", lit, "lit pixel(s)"
