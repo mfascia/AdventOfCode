@@ -10,8 +10,9 @@ tests = []
 inp = ""
 
 doTests = True
-doInput = True
-enablePart2 = True
+doInput = False
+enablePart1 = True
+enablePart2 = False
 #-----------------------------------------------------------------------------------------------
 
 
@@ -54,8 +55,9 @@ if __name__ == "__main__":
 		print "- TESTS"
 		print "--------------------------------------------------------------------------------"
 		for t in xrange(0, len(tests)):
-			print "--- Test #" + str(t) + ".1 ------------------------------"
-			main_1(tests[t])
+			if enablePart1:
+				print "--- Test #" + str(t) + ".1 ------------------------------"
+				main_1(tests[t])
 			if enablePart2:
 				print "--- Test #" + str(t) + ".2 ------------------------------"
 				main_2(tests[t])
@@ -66,8 +68,9 @@ if __name__ == "__main__":
 		print "--------------------------------------------------------------------------------"
 		print "- INPUT"
 		print "--------------------------------------------------------------------------------"
-		print "--- Part 1 ------------------------------"
-		main_1(inp)
-		if enablePart2:
+		if enablePart1:
 			print "--- Part 1 ------------------------------"
+			main_1(inp)
+		if enablePart2:
+			print "--- Part 2 ------------------------------"
 			main_2(inp)
