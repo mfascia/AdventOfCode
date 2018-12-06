@@ -10,19 +10,77 @@ tests = []
 inp = ""
 
 doTests = True
-doInput = False
-enablePart2 = False
+doInput = True
+enablePart1 = True
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
+def parse_input(text):
+	points = []
+	for line in text:
+		x, y = line.split(", ")
+		points.append([int(x), int(y)])
+	return points
 
-def main_1(inp):
-	pass
+
+def main_1(inp, size, offset):
+	grid = [ [-1 for x in xrange(0, size)] for y in xrange(0, size)]
+	points = parse_input(inp)
+	for j in xrange(0, size):
+		y = j - offset
+		for i in xrange(0, size):
+			x = i - offset
+			mdists = []
+			for p in xrange(0, len(points)):
+				mdists.append(abs(points[p][0]-x) + abs(points[p][1]-y))
+			min_md = min(mdists)
+			nearest = mdists.index(min_md)
+			grid[j][i] = -1 if mdists.count(min_md) > 1 else nearest
+
+	# scan edges of grid to collect points with infinite influence	
+	inf_points = []
+	for i in xrange(0, size):
+		p = grid[0][i]
+		if not p in inf_points:
+			inf_points.append(p)
+		p = grid[size-1][i]
+		if not p in inf_points:
+			inf_points.append(p)
+		p = grid[i][0]
+		if not p in inf_points:
+			inf_points.append(p)
+		p = grid[i][size-1]
+		if not p in inf_points:
+			inf_points.append(p)
+
+	valid_points = [p for p in xrange(0, len(points)) if p not in inf_points]
+	areas = [0 for x in xrange(0, len(points))]
+	for j in xrange(0, size):
+		for i in xrange(0, size):
+			if grid[j][i] == -1:
+				continue		
+			if grid[j][i] not in valid_points:
+				continue
+			areas[grid[j][i]] += 1
+
+	print "point", areas.index(max(areas)), "has max area with", max(areas)
 
 
-def main_2(inp):
-	pass
-	
+def main_2(inp, size, offset, range):
+	grid = [ [0 for x in xrange(0, size)] for y in xrange(0, size)]
+	points = parse_input(inp)
+	safeArea = 0
+	for j in xrange(0, size):
+		y = j - offset
+		for i in xrange(0, size):
+			x = i - offset
+			for p in xrange(0, len(points)):
+				grid[j][i] += abs(points[p][0]-x) + abs(points[p][1]-y)
+			if grid[j][i] < range:
+				safeArea += 1
+	print safeArea
+
 
 def read_input(filename):
 	with open(filename, "r") as f:
@@ -55,11 +113,12 @@ if __name__ == "__main__":
 		print "- TESTS"
 		print "--------------------------------------------------------------------------------"
 		for t in xrange(0, len(tests)):
-			print "--- Test #" + str(t) + ".1 ------------------------------"
-			main_1(tests[t])
+			if enablePart1:
+				print "--- Test #" + str(t) + ".1 ------------------------------"
+				main_1(tests[t], 10, 0)
 			if enablePart2:
 				print "--- Test #" + str(t) + ".2 ------------------------------"
-				main_2(tests[t])
+				main_2(tests[t], 10, 0, 32)
 			print 
 
 	if doInput:
@@ -67,8 +126,9 @@ if __name__ == "__main__":
 		print "--------------------------------------------------------------------------------"
 		print "- INPUT"
 		print "--------------------------------------------------------------------------------"
-		print "--- Part 1 ------------------------------"
-		main_1(inp)
-		if enablePart2:
+		if enablePart1:
 			print "--- Part 1 ------------------------------"
-			main_2(inp)
+			main_1(inp, 400, 50)
+		if enablePart2:
+			print "--- Part 2 ------------------------------"
+			main_2(inp, 1000, 500, 10000)
