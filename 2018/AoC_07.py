@@ -11,37 +11,76 @@ tests = []
 inp = ""
 
 doTests = True
-doInput = False
+doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
 def parse_input(text):
-	edges = {}
+	prevs = {}
+
 	for line in text:
 		matches = re.match("Step ([A-Z]) must be finished before step ([A-Z]) can begin.", line)
 		first = matches.group(1)
 		second = matches.group(2)
-		if not edges.has_key(second):
-			edges[second] = []
-		if not edges.has_key(first):
-			edges[first] = [] 
-		edges[second].append(first)
-		edges[second] = [x for x in sorted(edges[second])]
-	return edges
+
+		if not prevs.has_key(first):
+			prevs[first] = [] 
+		if not prevs.has_key(second):
+			prevs[second] = []
+		prevs[second].append(first)
+		prevs[second] = [x for x in sorted(prevs[second])]
+
+	return prevs
 
 
 def main_1(inp):
-	edges = parse_input(inp)
-	print edges
+	prevs = parse_input(inp)
 
-	leaves = [k for k,v in edges.items() if len(v) == 0]
-	print leaves
+ 	seq = ""
+	while prevs:
+		avails = [x for x in sorted([k for k, v in prevs.items() if len(v) == 0])]
+		a = avails[0]
+		seq += a
+		del(prevs[a])
+		for k, v in prevs.items():
+			if a in v:
+				v.remove(a)
+	print seq
 
 
-def main_2(inp):
-	pass
+def main_2(inp, cost, nb):
+	prevs = parse_input(inp)
+
+	t = 0
+ 	seq = ""
+	times = [0 for x in xrange(0, nb)]
+	tasks = ["." for x in xrange(0, nb)]
+
+	while prevs or sum(times):
+		for e in xrange(0, len(times)):
+			if times[e] == 0:
+				if tasks[e] != ".":
+					for k, v in prevs.items():
+						if tasks[e] in v:
+							v.remove(tasks[e])
+				if prevs:
+					avails = [x for x in sorted([k for k, v in prevs.items() if len(v) == 0])]
+					if avails:
+						a = avails[0]
+						tasks[e] = a
+						seq += a
+						del(prevs[a])
+						times[e] += cost + ord(a) - ord("A")
+				else:
+					tasks[e] = "."
+			else:
+				times[e] = max(times[e]-1, 0)
+		print t, "\t", "\t".join(tasks)
+		t += 1
+	print seq
+	print t
 
 
 def read_input(filename):
@@ -80,7 +119,7 @@ if __name__ == "__main__":
 				main_1(tests[t])
 			if enablePart2:
 				print "--- Test #" + str(t+1) + ".2 ------------------------------"
-				main_2(tests[t])
+				main_2(tests[t], 0, 2)
 			print 
 
 	if doInput:
@@ -93,4 +132,4 @@ if __name__ == "__main__":
 			main_1(inp)
 		if enablePart2:
 			print "--- Part 2 ------------------------------"
-			main_2(inp)
+			main_2(inp, 60, 5)
