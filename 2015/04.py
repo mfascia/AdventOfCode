@@ -2,7 +2,7 @@ import sys
 import hashlib
 
 
-input_value = "iwrupvqb"
+input_value = "bgvyzdsv"
 
 
 def main_1():
