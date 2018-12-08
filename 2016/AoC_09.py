@@ -44,7 +44,7 @@ def main_2(input_stream):
     print size    
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_09_input.txt")
+    input_stream = read_input_stream("2016\\AoC_09_input.txt")
     main_1(input_stream)
     print
     main_2(input_stream)

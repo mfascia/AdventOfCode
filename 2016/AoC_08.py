@@ -52,7 +52,7 @@ def main_1(input_stream):
     count = 0
     for c in buffer:
         if c == "#":
-            count += 1
+            count += 1 
 
     print count
             
@@ -61,7 +61,7 @@ def main_2(input_stream):
     pass
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_08_input.txt")
+    input_stream = read_input_stream("2016\\AoC_08_input.txt")
     main_1(input_stream)
     print
     main_2(input_stream)

@@ -32,7 +32,7 @@ def main(input_stream):
         print most_common, least_common
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_06_input.txt")
+    input_stream = read_input_stream("2016\\AoC_06_input.txt")
     main(input_stream)
 
 

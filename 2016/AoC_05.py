@@ -38,7 +38,7 @@ For example, if the Door ID is abc:
 You almost choke on your popcorn as the final character falls into place, producing the password 05ace8e3.
 '''
 
-pwd = "ojvtpuvg"
+pwd = "ugkcyxxp"
 
 def main_1():
     index = 0

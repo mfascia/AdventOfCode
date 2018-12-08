@@ -72,7 +72,7 @@ def main_1(input_stream):
 
 
 if __name__ == "__main__":
-    input_stream = read_input_stream("AoC_10_input.txt")
+    input_stream = read_input_stream("2016\\AoC_10_input.txt")
     main_1(input_stream)
 
 
