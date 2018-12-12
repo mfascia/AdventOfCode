@@ -1,7 +1,7 @@
 import sys
 from Queue import PriorityQueue
 
-key = 1364
+key = 1358
 
 
 class Cell:

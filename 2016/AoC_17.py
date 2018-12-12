@@ -3,7 +3,7 @@ import hashlib
 from Queue import PriorityQueue
 
 
-key = "awrkjxxr"
+key = "edjrjqaa"
 
 
 class State:

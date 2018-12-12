@@ -2,7 +2,7 @@ import sys
 import math
 
 
-nb_elves = 3001330
+nb_elves = 3014387
 
 
 # Theoretical answer: if n = 2^a + b, solution is 2b+1. See https://www.youtube.com/watch?v=uCsD3ZGzMgE or lookup Josephus problem

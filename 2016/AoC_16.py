@@ -4,7 +4,7 @@ import sys
 disk_size_1 = 272
 disk_size_2 = 35651584
 
-text = "01111001100111011"
+text = "00111101111101000"
 
 
 def dragon_curve(left):

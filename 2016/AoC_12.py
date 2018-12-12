@@ -18,8 +18,8 @@ jnz b -2
 cpy c b
 dec d
 jnz d -6
-cpy 17 c
-cpy 18 d
+cpy 18 c
+cpy 11 d
 inc a
 dec d
 jnz d -2
@@ -74,8 +74,10 @@ def main(src, initial_c):
 
 
 if __name__ == "__main__":
-    #main(sourcecode, 0)
+    print "part 1"    
+    main(sourcecode, 0)
     print
+    print "part 2"
     main(sourcecode, 1)
     
 
