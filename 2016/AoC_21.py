@@ -110,7 +110,7 @@ def main_2(pwd, text):
 	print ct
 
 if __name__ == "__main__":
-	text = read_input("AoC_21_input.txt")
+	text = read_input("2016\\AoC_21_input.txt")
 
 	print ("Part 1 ---------------------------------------------------------------------------------------------------------")
 	main_1(in_1, text)

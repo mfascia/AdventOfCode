@@ -20,8 +20,8 @@ jnz d -2
 tgl c
 cpy -16 c
 jnz 1 c
-cpy 94 c
-jnz 82 d
+cpy 83 c
+jnz 78 d
 inc a
 inc d
 jnz d -2
@@ -30,109 +30,112 @@ jnz c -5'''
 
 
 def main(src, initial_a):
-    regs = {
-        "pc": 0,
-        "a": initial_a,
-        "b": 0,
-        "c": 0,
-        "d": 0
-    }
+	regs = {
+		"pc": 0,
+		"a": initial_a,
+		"b": 0,
+		"c": 0,
+		"d": 0
+	}
 
-    code = src.split("\n")
+	code = src.split("\n")
 
-    while regs["pc"] < len(code):
-        old = regs["d"]
+	while regs["pc"] < len(code):
+		old = regs["d"]
 
-        line = code[regs["pc"]]
-        tokens = line.split(" ")
+		line = code[regs["pc"]]
+		tokens = line.split(" ")
 
-        if tokens[0] == "inc":
-            regs[tokens[1]] += 1
+		if tokens[0] == "inc":
+			regs[tokens[1]] += 1
 
-        elif tokens[0] == "dec":
-            regs[tokens[1]] -= 1
-            
-        elif tokens[0] == "jnz":
-            comp = 0
-            if tokens[1].lstrip("-").isdigit():
-                comp = int(tokens[1])
-            else:
-                comp = regs[tokens[1]] 
-            if comp != 0:
-                offset = 0
-                if tokens[2].lstrip("-").isdigit():
-                    offset = int(tokens[2])
-                else:
-                    offset = regs[tokens[2]] 
+		elif tokens[0] == "dec":
+			regs[tokens[1]] -= 1
+			
+		elif tokens[0] == "jnz":
+			comp = 0
+			if tokens[1].lstrip("-").isdigit():
+				comp = int(tokens[1])
+			else:
+				comp = regs[tokens[1]] 
+			if comp != 0:
+				offset = 0
+				if tokens[2].lstrip("-").isdigit():
+					offset = int(tokens[2])
+				else:
+					offset = regs[tokens[2]] 
 
-                regs["pc"] += offset - 1
+				regs["pc"] += offset - 1
 
-        elif tokens[0] == "cpy":
-            if not tokens[2].lstrip("-").isdigit():
-                if tokens[1].lstrip("-").isdigit():
-                    regs[tokens[2]] = int(tokens[1])
-                else:
-                    regs[tokens[2]] = regs[tokens[1]]
+		elif tokens[0] == "cpy":
+			if not tokens[2].lstrip("-").isdigit():
+				if tokens[1].lstrip("-").isdigit():
+					regs[tokens[2]] = int(tokens[1])
+				else:
+					regs[tokens[2]] = regs[tokens[1]]
 
-        elif tokens[0] == "tgl":
-            target_address = regs["pc"]
-            if tokens[1].lstrip("-").isdigit():
-                target_address += int(tokens[1])
-            else:
-                target_address += regs[tokens[1]]
+		elif tokens[0] == "tgl":
+			target_address = regs["pc"]
+			if tokens[1].lstrip("-").isdigit():
+				target_address += int(tokens[1])
+			else:
+				target_address += regs[tokens[1]]
 
-            if target_address < len(code):
-                target_code = code[target_address]
-                target_tokens = target_code.split(" ")
-                newline = ""
-                if len(target_tokens) == 2:
-                    if "inc" in target_code:
-                        newline = "dec" + " " + target_tokens[1]
-                    else:
-                        newline = "inc" + " " + target_tokens[1]
-                elif len(target_tokens) == 3:
-                    if "jnz" in target_code:
-                        newline = "cpy" + " " + target_tokens[1] + " " + target_tokens[2]
-                    else:
-                        newline = "jnz" + " " + target_tokens[1] + " " + target_tokens[2]
-                code = code[:target_address] + [newline] + code[target_address+1:]
+			if target_address < len(code):
+				target_code = code[target_address]
+				target_tokens = target_code.split(" ")
+				newline = ""
+				if len(target_tokens) == 2:
+					if "inc" in target_code:
+						newline = "dec" + " " + target_tokens[1]
+					else:
+						newline = "inc" + " " + target_tokens[1]
+				elif len(target_tokens) == 3:
+					if "jnz" in target_code:
+						newline = "cpy" + " " + target_tokens[1] + " " + target_tokens[2]
+					else:
+						newline = "jnz" + " " + target_tokens[1] + " " + target_tokens[2]
+				code = code[:target_address] + [newline] + code[target_address+1:]
 
-        regs["pc"] += 1
-        
-        # to help with part 2, dump the registers whenever register d resets
-        if old < regs["d"]:
-            print old, regs
+		regs["pc"] += 1
+		
+		# to help with part 2, dump the registers whenever register d resets
+		if old < regs["d"]:
+			print old, regs
 
-    print regs
+	print regs
 
 
 # looking at the output for n=6, 7 and 8 (see AoC_23_output.txt)
 # It turns out that the program is computing the following for the input value n:
 #  n! + (94 * 82)
-def fast_part2(n):
-    r = 2
-    for i in xrange(3, n+1):
-        r = r*i
-    r += 94 * 82
+## UPDATED
+#  n! + (83 * 78)
 
-    return r
+def fast_part2(n):
+	r = 2
+	for i in xrange(3, n+1):
+		r = r*i
+	r += 83 * 78
+
+	return r
 
 
 if __name__ == "__main__":
 	print ("Part 1 ---------------------------------------------------------------------------------------------------------")
-    main(sourcecode, 7)
+	main(sourcecode, 7)
 
-    print
+	print
 
-    print ("Part 2 ---------------------------------------------------------------------------------------------------------")
-    # generate output for lower n in order to deduce the formula    
-    #main(sourcecode, 6)
-    #print
-    #main(sourcecode, 7)
-    #print
-    #main(sourcecode, 8)
+	print ("Part 2 ---------------------------------------------------------------------------------------------------------")
+	# generate output for lower n in order to deduce the formula    
+	main(sourcecode, 6)
+	#print
+	#main(sourcecode, 7)
+	#print
+	#main(sourcecode, 8)
 
-    print fast_part2(12)
+	print fast_part2(12)
 
 
 '''
@@ -150,12 +153,12 @@ The code looks like it uses almost the same architecture and instruction set tha
 
 tgl x toggles the instruction x away (pointing at instructions like jnz does: positive means forward; negative means backward):
 
-    For one-argument instructions, inc becomes dec, and all other one-argument instructions become inc.
-    For two-argument instructions, jnz becomes cpy, and all other two-instructions become jnz.
-    The arguments of a toggled instruction are not affected.
-    If an attempt is made to toggle an instruction outside the program, nothing happens.
-    If toggling produces an invalid instruction (like cpy 1 2) and an attempt is later made to execute that instruction, skip it instead.
-    If tgl toggles itself (for example, if a is 0, tgl a would target itself and become inc a), the resulting instruction is not executed until the next time it is reached.
+	For one-argument instructions, inc becomes dec, and all other one-argument instructions become inc.
+	For two-argument instructions, jnz becomes cpy, and all other two-instructions become jnz.
+	The arguments of a toggled instruction are not affected.
+	If an attempt is made to toggle an instruction outside the program, nothing happens.
+	If toggling produces an invalid instruction (like cpy 1 2) and an attempt is later made to execute that instruction, skip it instead.
+	If tgl toggles itself (for example, if a is 0, tgl a would target itself and become inc a), the resulting instruction is not executed until the next time it is reached.
 
 For example, given this program:
 
@@ -167,11 +170,11 @@ cpy 1 a
 dec a
 dec a
 
-    cpy 2 a initializes register a to 2.
-    The first tgl a toggles an instruction a (2) away from it, which changes the third tgl a into inc a.
-    The second tgl a also modifies an instruction 2 away from it, which changes the cpy 1 a into jnz 1 a.
-    The fourth line, which is now inc a, increments a to 3.
-    Finally, the fifth line, which is now jnz 1 a, jumps a (3) instructions ahead, skipping the dec a instructions.
+	cpy 2 a initializes register a to 2.
+	The first tgl a toggles an instruction a (2) away from it, which changes the third tgl a into inc a.
+	The second tgl a also modifies an instruction 2 away from it, which changes the cpy 1 a into jnz 1 a.
+	The fourth line, which is now inc a, increments a to 3.
+	Finally, the fifth line, which is now jnz 1 a, jumps a (3) instructions ahead, skipping the dec a instructions.
 
 In this example, the final value in register a is 3.
 
