@@ -2,6 +2,7 @@ import os
 import sys
 import re
 from PIL import Image
+from collections import deque
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -11,14 +12,14 @@ from PIL import Image
 tests = []
 inp = ""
 
-doTests = False
-doInput = True
+doTests = True
+doInput = False
 enablePart1 = True
 enablePart2 = False
 #-----------------------------------------------------------------------------------------------
 
-GRID_WIDTH = 1500
-GRID_HEIGHT = 3000
+GRID_WIDTH = 600
+GRID_HEIGHT = 300
 
 springPos = (500, 0)
 
@@ -57,12 +58,12 @@ def parse_input(inp):
 	return grid, (minX, minY, maxX, maxY)
 
 
-def print_grid(grid, sources, x, y, w, h):
+def print_grid(grid, px, py, x, y, w, h):
 	for j in xrange(y, y+h):
 		line = ""
 		for i in xrange(x, x+w):
-			if (i, j) in sources:
-				line += "+"
+			if (i, j) == (px, py):
+				line += "X"
 			else:
 				line += grid[j][i]
 		print line
@@ -85,72 +86,45 @@ def save_image(name, grid, sources, x, y, w, h):
 
 
 def main_1(inp):
-	sources = [springPos]
 	grid, bbox = parse_input(inp)
 	
 	print bbox
 
-	# print_grid(grid, sources, bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1])
 	#save_image(sys.argv[0].replace(".py", "_initial.png"), grid, sources, bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1])
 
-	allSources = []
-	while sources:
-		source = sources.pop()
-		allSources.append(source)
+	water = deque()
+	water.append(springPos)
 
-		x, y = source
+	fork = deque()
 
-		killSource = False
-		# go down vertically up to the next floor
-		while grid[y][x] != "#":
-			grid[y][x] = "|"
-			y += 1
-			if y>bbox[3]:
-				killSource = True
-				break
+	while water:
+		x, y = water[len(water)-1]
+		print_grid(grid, x, y, bbox[0]-1, bbox[1], bbox[2]-bbox[0]+3, bbox[3]-bbox[1]+1)
 
-		if killSource:
+		if y == bbox[3]:
+			water.pop()
+			f = fork.pop()
+			while water[len(water)-1] != f:
+				water.pop()
 			continue
 
-		keepGoingUp = True
-		while keepGoingUp and y>source[1]:
-			# print_grid(grid, allSources, bbox[0], bbox[1], bbox[2]-bbox[0]+1, bbox[3]-bbox[1]+1)
-			# go up once
-			y -= 1
-			grid[y][x] = "|"
-			for i in xrange(x-1, -1, -1):
-				if grid[y+1][i] == ".":
-					# found hole - make it a source and abort
-					sources.append((i, y))
-					keepGoingUp = False
-					break
-				elif grid[y][i] in "#|~":
-					# found wall or water
-					break
-				grid[y][i] = "|"
+		if grid[y+1][x] == ".":
+			grid[y+1][x] = "|"
+			water.append((x, y+1))
+			continue
+		elif grid[y][x-1] == ".":
+			grid[y][x-1] = "|"
+			water.append((x-1, y))
+			fork.append((x, y))
+			continue
+		elif grid[y][x+1] == ".":
+			grid[y][x+1] = "|"
+			water.append((x+1, y))
+			continue
+		else:
+			water.pop()
 
-			for i in xrange(x+1, GRID_WIDTH):
-				if grid[y+1][i] == ".":
-					# found hole - make it a source and abort
-					sources.append((i, y))
-					grid[y][i] = "+"
-					keepGoingUp = False
-					break
-				elif grid[y][i] in "#|~":
-					# found wall or water
-					break
-				grid[y][i] = "|"
 
-	# print_grid(grid, allSources, bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1])
-	save_image(sys.argv[0].replace(".py", "_final.png"), grid, sources, bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1])
-
-	count = 0
-	for y in xrange(1, bbox[3]+1):
-		for x in xrange(0, GRID_WIDTH):
-			if grid[y][x] in "+|~":
-				count += 1 
-
-	print count
 
 
 def main_2(inp):
