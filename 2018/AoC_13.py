@@ -13,7 +13,7 @@ inp = ""
 doTests = True
 doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 turns = {
 	"^": {
@@ -76,11 +76,14 @@ def read_tracks(inp):
 	trains = []
 	y = 0
 	for line in inp:
-		pos = [line.index(x) for x in "<>^v" if x in line]
-		for p in pos:
-			trains.append([[p, y], line[p], 0])
-			line = line[:p] + ("|" if line[p] in "v^" else "-") + line[p+1:]
-		tracks.append(line)
+		edited = ""
+		for i in xrange(0, len(line)):
+			if line[i] in "<>^v":
+				trains.append([[i, y], line[i], 0])
+				edited += "|" if line[i] in "v^" else "-"
+			else:
+				edited += line[i]
+		tracks.append(edited)
 		y += 1
 	return tracks, trains
 
@@ -117,15 +120,11 @@ def save_state(time, tracks, trains):
 
 def main_1(inp):
 	tracks, trains = read_tracks(inp)
-	
 	t = 0
-	
 	while True:
 		#save_state(t, tracks, trains)
-		if t>0 and t%10==0:
-			print t, "..."
-
 		t += 1
+		trains.sort(key=lambda x: (x[0][1], x[0][0]))
 		for train in trains:
 			train = move(tracks, train)
 
@@ -138,7 +137,30 @@ def main_1(inp):
 
 
 def main_2(inp):
-	pass
+	tracks, trains = read_tracks(inp)
+	t = 0
+	while 100000:
+		t += 1
+		trains.sort(key=lambda x: (x[0][1], x[0][0]))
+		collided = []
+		for t1 in xrange(0, len(trains)):
+			if not trains[t1]:
+				continue
+			trains[t1] = move(tracks, trains[t1])
+			for t2 in xrange(0, len(trains)):
+				if not trains[t2] or t1==t2:
+					continue
+				if trains[t1][0][0] == trains[t2][0][0] and trains[t1][0][1] == trains[t2][0][1]:
+					print "Collision at t=", t, "and location=", trains[t1][0], "between trains", t1, "and", t2
+					collided += [t1, t2]
+					break
+		if collided:
+			trains = [trains[x] for x in xrange(0,len(trains)) if x not in collided]
+
+		if len(trains) < 2:
+			print "Last trains:", trains
+			return
+	print "Could not find a solution. Something is WRONG!"
 
 
 def read_input(filename):

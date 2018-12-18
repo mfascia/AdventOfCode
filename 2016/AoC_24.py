@@ -143,7 +143,7 @@ def main_2(text, cache, points):
 
 
 if __name__ == "__main__":
-    text = read_input("AoC_24_input.txt")
+    text = read_input("2016\\AoC_24_input.txt")
     cache, points = build_cache(text)
     
     print " Part 1 ------------------------------------------------------------"
