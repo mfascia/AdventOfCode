@@ -4,8 +4,8 @@ import itertools
 from Queue import PriorityQueue
 
 
-materials = ["polonium", "thulium", "promethium", "ruthenium", "cobalt", "elerium", "dilithium"]
-materials_short = ["pol", "thu", "pro", "rut", "cob", "ele", "dil"]
+materials = ["promethium", "ruthenium", "cobalt", "curium", "plutonium", "elerium", "dilithium"]
+materials_short = ["pro", "rut", "cob", "cur", "plu", "ele", "dil"]
 
 init_floors_test = [
 #   generator       microchip
@@ -16,20 +16,20 @@ init_floors_test = [
 
 init_floors_1 = [
 #   generator       microchip
-    0,              1,          # polonium
-    0,              0,          # thulium
-    0,              1,          # promethium
-    0,              0,          # ruthenium
-    0,              0,          # cobalt
+    0,              0,          # promethium
+    1,              2,          # ruthenium
+    1,              2,          # cobalt
+    1,              2,          # curium
+    1,              2,          # plutonium
 ]
 
 init_floors_2 = [
 #   generator       microchip
-    0,              1,          # polonium
-    0,              0,          # thulium
     0,              1,          # promethium
     0,              0,          # ruthenium
     0,              0,          # cobalt
+    1,              0,          # curium
+    1,              0,          # plutonium
     0,              0,          # elerium
     0,              0,          # dilithium
 ]
@@ -46,12 +46,12 @@ def print_state(state, elevator):
         text += "F" + str(i) + (" | E | " if elevator == i else " |   | ")
         for j in xrange(0, len(state)):
             if state[j] == i:
-                text += materials_short[j/2] + ("_G" if j%2==0 else "_P") + " "
+                text += materials_short[j/2] + ("_G" if j%2==0 else "_M") + " "
             else:
                 text += "      " 
         print text
     print "=================================================================================="
-    print
+    print 
 
 
 def is_goal(state):
@@ -84,8 +84,8 @@ def next_valid_states(building):
             continue
 
         # Moving a single chip is never a good option
-        if len(move)==1 and move[0]%2==1:
-            continue
+        #if len(move)==1 and move[0]%2==1:
+        #    continue
        
         if elevator < 3:
             new_state = [x for x in state]
@@ -135,7 +135,7 @@ def hash_building(build):
     return hash
 
 
-def astar_pathfind(start, neighbours_fn, cost_fn, heuristic_fn):
+def astar_pathfind(start, neighbours_fn, cost_fn, heuristic_fn, goal_fn):
     frontier = PriorityQueue()
     frontier.put(start, 0)
     came_from = {}
@@ -148,7 +148,7 @@ def astar_pathfind(start, neighbours_fn, cost_fn, heuristic_fn):
         current = frontier.get()
         hash_current = hash_building(current)
 
-        if is_goal(current[0]):
+        if goal_fn(current[0]):
             break
 
         neighbours = neighbours_fn(current) 
@@ -173,7 +173,7 @@ def astar_pathfind(start, neighbours_fn, cost_fn, heuristic_fn):
 
 def main(state, elevator):
 
-    path = astar_pathfind([state, 0], next_valid_states, cost_one, cost)
+    path = astar_pathfind([state, 0], next_valid_states, cost_one, cost, is_goal)
     
     print "=== PATH =========================="
     print "Path len:", str(len(path)-1)    
@@ -182,9 +182,17 @@ def main(state, elevator):
 
 
 if __name__ == "__main__":
+    print "TEST"
+    next_states_cache = {}
+    print_state(init_floors_test, init_elevator)
+    main(init_floors_test, init_elevator)
+    print
+    print "PART 1"
+    next_states_cache = {}
     print_state(init_floors_1, init_elevator)
     main(init_floors_1, init_elevator)
     print
+    print "PART 2"
     next_states_cache = {}
     print_state(init_floors_2, init_elevator)
     main(init_floors_2, init_elevator)

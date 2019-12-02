@@ -3,7 +3,7 @@ import sys
 
 sourcecode = '''cpy a d
 cpy 7 c
-cpy 362 b
+cpy 365 b
 inc d
 dec b
 jnz b -2
@@ -110,13 +110,13 @@ def execute(src, init_a = 0):
 		
 
 
-# The code calculates a value v = a + (7*362) and then integer-divides it by 2 up to 0
-# at each division step, it outputs 1 if the current v is even, 0 if it is odd
+# The code calculates a value v = a + (7*365) and then integer-divides it by 2 up to 0
+# at each division step, it outputs 1 if the current v is evn, 0 if it is odd
 # This is the sequence of nuber we need as it produces alternanting "doubles" that will alternate between odd and even:
 # 	0 1 2 5 10 21 42 85 170 341 682 1365 2730 5461 10922 ...
-# We need to start on an the smallest even number greater than 7*362=2534
+# We need to start on an the smallest even number greater than 7*365=2555
 # 	--> 2730
-# Therefore register a should contain 2730 - (7*362) = 196
+# Therefore register a should contain 2730 - (7*365) = 175
 
 if __name__ == "__main__":
 	print ("Part 1 ---------------------------------------------------------------------------------------------------------")
