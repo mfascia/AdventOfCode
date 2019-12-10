@@ -12,7 +12,7 @@ inp = ""
 doTests = True
 doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
@@ -23,33 +23,44 @@ def hashWire(tokens):
 	x = 0
 	y = 0
 	hashes = set()
+	steps = {}
+	s = 1
 	for tok in tokens:
 		if tok[0] == "U":
 			for i in xrange(0, int(tok[1:])):
 				y += 1
 				hashes.add((x, y))
+				steps[(x,y)] = s
+				s += 1
 		elif tok[0] == "D":
 			for i in xrange(0, int(tok[1:])):
 				y -= 1
 				hashes.add((x, y))
+				steps[(x,y)] = s
+				s += 1
 		elif tok[0] == "L":
 			for i in xrange(0, int(tok[1:])):
 				x -= 1
 				hashes.add((x, y))
+				steps[(x,y)] = s
+				s += 1
 		elif tok[0] == "R":
 			for i in xrange(0, int(tok[1:])):
 				x += 1
 				hashes.add((x, y))
-	return hashes
+				steps[(x,y)] = s
+				s += 1
+	return hashes, steps
 
 
 def main_1(inp):
 	tokens1 = inp[0].split(",")
 	tokens2 = inp[1].split(",")
 
-	hash1 = hashWire(tokens1)
+	hash1, steps1 = hashWire(tokens1)
 	print "wire 1 has length", len(hash1)
-	hash2 = hashWire(tokens2)
+
+	hash2, steps2 = hashWire(tokens2)
 	print "wire 2 has length", len(hash2)
 
 	inter = sorted([abs(v[0])+abs(v[1]) for v in hash1 & hash2])
@@ -58,7 +69,18 @@ def main_1(inp):
 
 
 def main_2(inp):
-	pass
+	tokens1 = inp[0].split(",")
+	tokens2 = inp[1].split(",")
+
+	hash1, steps1 = hashWire(tokens1)
+	print "wire 1 has length", len(hash1)
+
+	hash2, steps2 = hashWire(tokens2)
+	print "wire 2 has length", len(hash2)
+
+	inter = sorted([steps1[v]+steps2[v] for v in hash1 & hash2])
+	print inter
+	print "Closest intersection is at Manhattan distace of", inter[0]
 
 
 def read_input(filename):
