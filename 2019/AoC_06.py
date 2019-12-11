@@ -9,12 +9,11 @@ import sys
 tests = []
 inp = ""
 
-doTests = True
+doTests = False
 doInput = True
-enablePart1 = True
-enablePart2 = False
+enablePart1 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
-
 
 def main_1(inp):
 	parents = {}
@@ -46,8 +45,49 @@ def main_1(inp):
 	print total
 
 
+def findPath(parents, start, end):
+	path = []
+	n = start
+	while n != end:
+		n = parents[n]
+		path.append(n)
+	return path
+
+
 def main_2(inp):
-	pass
+	parents = {}
+	nodes = set()
+	root = "COM"
+	for line in inp:
+		a, b = line.split(")")
+		nodes.add(a)
+		nodes.add(b)
+		parents[b] = a
+		
+	orbits = {}
+	for n in nodes:
+		orbit = 1
+		if parents.has_key(n):
+			parent = parents[n]
+			while parent != root:
+				orbit += 1
+				if parents.has_key(parent):
+					parent = parents[parent]
+			orbits[n] = orbit
+
+	path1 = list(reversed(findPath(parents, "YOU", root)))
+	path2 = list(reversed(findPath(parents, "SAN", root)))
+
+	print path1, len(path1)
+	print path2, len(path2)
+
+	common = 0
+	for i in xrange(0, min(len(path1), len(path2))):
+		if path1[i] != path2[i]:
+			common = i
+			break
+
+	print len(path1) + len(path2) - 2 * common
 
 
 def read_input(filename):
