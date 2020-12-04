@@ -40,14 +40,14 @@ if __name__ == "__main__":
 				i += 1
 				testfile = sys.argv[0].replace(".py", ("_test_%d.txt" % i))
 				if os.path.isfile(testfile):
-					tests.append(read_input(testfile))
+					tests.append([x for x in read_input(testfile)])
 				else:
 					break
 		
 	if doInput:
 		# read input
 		if len(inp) == 0:
-			inp = read_input(sys.argv[0].replace(".py", "_input.txt"))
+			inp = [x for x in read_input(sys.argv[0].replace(".py", "_input.txt"))]
 
 	if doTests:
 		# run tests
