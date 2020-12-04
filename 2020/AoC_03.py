@@ -1,6 +1,5 @@
 import os
 import sys
-import re
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -17,44 +16,29 @@ enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
+def checkSlope(dx, dy):
+	x = 0
+	trees = 0
+	for y in range(dy, len(inp), dy):
+		x = (x+dx) % len(inp[0])
+		if inp[y][x] == "#":				
+			trees += 1
+	return trees
+
+
 def main_1(inp):
-	valid = 0
-
-	for line in inp:
-		rule, pw = [x.strip() for x in re.split(":", line)]
-		freq, letter = [x.strip() for x in re.split(" ", rule)]
-		mini, maxi = [int(x.strip()) for x in re.split("-", freq)]
-
-		sum = 0
-		for c in pw:
-			if c == letter:
-				sum += 1
-
-		if mini <= sum and maxi >= sum:
-			valid += 1
-
-	print("There are", valid, "valid passwords")
+	trees = checkSlope(3, 1)
+	print("Bumped into", trees, "trees.")
 
 
 def main_2(inp):
-	valid = 0
-	
-	for line in inp:
-		rule, pw = [x.strip() for x in re.split(":", line)]
-		pos, letter = [x.strip() for x in re.split(" ", rule)]
-		i, j = [int(x.strip())-1 for x in re.split("-", pos)]
-
-		score = 0
-		if len(pw) >= i and pw[i] == letter:
-			score += 1
-
-		if len(pw) >= j and pw[j] == letter:
-			score += 1
-
-		if score == 1:
-			valid += 1
-
-	print("There are", valid, "valid passwords")
+	prod = 1
+	prod =  prod * checkSlope(1, 1)
+	prod =  prod * checkSlope(3, 1)
+	prod =  prod * checkSlope(5, 1)
+	prod =  prod * checkSlope(7, 1)
+	prod =  prod * checkSlope(1, 2)
+	print(prod)
 
 
 def read_input(filename):
