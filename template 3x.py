@@ -8,6 +8,7 @@ import sys
 # otherwise, tests go in files named AoC_xx_test_x.txt and input goes in AoC_xx_input.txt
 tests = []
 inp = ""
+isTest = False
 
 doTests = True
 doInput = False
@@ -51,6 +52,7 @@ if __name__ == "__main__":
 
 	if doTests:
 		# run tests
+		isTest = True
 		print ("--------------------------------------------------------------------------------")
 		print ("- TESTS")
 		print ("--------------------------------------------------------------------------------")
@@ -65,6 +67,7 @@ if __name__ == "__main__":
 
 	if doInput:
 		# process input
+		isTest = False
 		print ("--------------------------------------------------------------------------------")
 		print ("- INPUT")
 		print ("--------------------------------------------------------------------------------")
