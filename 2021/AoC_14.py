@@ -76,14 +76,16 @@ def main_2(inp):
 	# create histogram of letters based on pairs
 	hist = [0 for x in range(0, 26)]
 	for k, v in pairs.items():
-		hist[ord(k[0])-ord("A")] += v/2		# Each letter appears in 2 pairs, so need to only add half of the count 
-		hist[ord(k[1])-ord("A")] += v/2		# Each letter appears in 2 pairs, so need to only add half of the count
-
-	# Remove null entries in histogram
-	histNZ = [x for x in hist if x > 0]
+		hist[ord(k[0])-ord("A")] += v
+		hist[ord(k[1])-ord("A")] += v
+	
+	# Remove null entries in histogram and divide by 2 as all the letters will be double counted except from first and last
+	hist[ord(template[0])-ord("A")] += 1
+	hist[ord(template[-1])-ord("A")] += 1
+	histNZ = [int(x/2) for x in hist if x > 0]
 
 	# Round min and max to the nearer integer before calculating final score
-	print(int(max(histNZ)+0.5)-int(min(histNZ)+0.5))
+	print(max(histNZ)-min(histNZ))
 
 
 
