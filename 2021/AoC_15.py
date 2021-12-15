@@ -1,6 +1,7 @@
 import os
 import sys
 import queue
+from PIL import Image
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -41,15 +42,22 @@ def find_shortest_path(grid):
 				costs[n] = c
 				froms[n] = p
 				toVisit.put([n, c])
+	path = []
+	p = (sx-1, sy-1)
+	while p != (-1, -1):
+		path.append(p)
+		p = froms[p]
+	path = reversed(path)
 
-	return costs[(sx-1, sy-1)]
+	return costs[(sx-1, sy-1)], path
 
 
 def main_1(inp):
 	grid = []
 	for line in inp:
 		grid.append([int(x) for x in line])
-	print(find_shortest_path(grid))
+	c, p = find_shortest_path(grid)
+	print(c)
 
 
 def main_2(inp):
@@ -78,7 +86,23 @@ def main_2(inp):
 			if exp[y][x] == 10:
 				exp[y][x] = 1
 
-	print(find_shortest_path(exp))
+	c, p = find_shortest_path(exp)
+	print(c)
+
+	im = Image.new(mode="RGB", size=(5*sx, 5*sy))	
+	for y in range(0, 5*sy):
+		for x in range(0, 5*sx):
+			c = 25*exp[y][x]
+			im.putpixel([x, y], (c, c, c))
+	for i in p:
+		 im.putpixel(i, (255, 0, 0))
+	
+	filename = sys.argv[0][:-3]
+	if isTest:
+		filename += "-test.png"
+	else:
+		filename += "-input.png"
+	im.save(filename)
 
 
 def read_input(filename):
