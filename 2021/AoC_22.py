@@ -1,3 +1,4 @@
+#####
 import os
 import sys
 import re
@@ -23,65 +24,37 @@ Y = 1
 Z = 2
 
 class Box:
-	def __init__(self, x1, x2, y1, y2, z1, z2):
+	def __init__(self, x1, x2, y1, y2, z1, z2, p=0):
 		self.min = (min(x1, x2), min(y1, y2), min(z1, z2))
 		self.max = (max(x1, x2), max(y1, y2), max(z1, z2))
+		self.polarity = p
 
 	def __str__(self):
-		return f"[{self.min} --> {self.max}]"
+		return f"[{self.min} --> {self.max}] x {self.polarity}"
+
+	def __repr__(self):
+		return f"[{self.min} --> {self.max}] x {self.polarity}"
 
 	def volume(self):
-		return (self.max[0]-self.min[0]) * (self.max[1]-self.min[1]) * (self.max[2]-self.min[2])
+		return (self.max[0]-self.min[0]) * (self.max[1]-self.min[1]) * (self.max[2]-self.min[2]) 
 
-	def split(self, v, axis):
-		if self.min[axis] < v and v < self.max[axis]:
-			if axis == X:
-				a = Box(self.min[0], v, self.min[1], self.max[1], self.min[2], self.max[2])
-				b = Box(v, self.max[0], self.min[1], self.max[1], self.min[2], self.max[2])
-			elif axis == Y:
-				a = Box(self.min[0], self.max[0], self.min[1], v, self.min[2], self.max[2])
-				b = Box(self.min[0], self.max[0], v, self.max[1], self.min[2], self.max[2])
-			elif axis == Z:
-				a = Box(self.min[0], self.max[0], self.min[1], self.max[1], self.min[2], v)
-				b = Box(self.min[0], self.max[0], self.min[1], self.max[1], v, self.max[2])
-			return [a, b]
-		else:
-			return [self]
-
-
-	def cut_by(self, other):
-		boxes = [self]
-		for a in range(0,3):
-			sub = []
-			for b in boxes:
-				sub += b.split(other.min[a], a)
-			boxes = sub
-			sub = []
-			for b in boxes:
-				sub += b.split(other.max[a], a)
-			boxes = sub
-		return tuple(boxes)
+	def overlaps(self, other):
+	  return other.max[X] >= self.min[X] and other.min[X] <= self.max[X] and other.max[Y] >= self.min[Y] and other.min[Y] <= self.max[Y] and other.max[Z] >= self.min[Z] and other.min[Z] <= self.max[Z]
 
 	def contains(self, other):
 		return self.min[X] <= other.min[X] and self.max[X] >= other.max[X] and self.min[Y] <= other.min[Y] and self.max[Y] >= other.max[Y] and self.min[Z] <= other.min[Z] and self.max[Z] >= other.max[Z]
 
-
-
-	def tests():
-		a = Box(0, 10, 0, 10, 0, 10)
-		b = Box(5, 15, 5, 15, 5, 15)
-		c = Box(3, 3, 3, 7, 7, 7)
-		print(a)
-		print(b)
-
-		pieces = b.cut_by(a)
-		for p in pieces:
-			print(p)
- 
-		print(a.contains(b))
-		print(a.contains(c))
-		print(a.contains(a))
-		print(c.contains(a))
+	def intersection(self, other):
+		minX = max(self.min[X], other.min[X])
+		maxX = min(self.max[X], other.max[X])
+		minY = max(self.min[Y], other.min[Y])
+		maxY = min(self.max[Y], other.max[Y])
+		minZ = max(self.min[Z], other.min[Z])
+		maxZ = min(self.max[Z], other.max[Z])
+		if minX <= maxX and minY <= maxY and minZ <= maxZ:
+			return Box(minX, maxX, minY, maxY, minZ, maxZ)
+		else:
+			return None
 
 
 def main(inp, init):
@@ -95,33 +68,29 @@ def main(inp, init):
 		match = re.match("(on|off) x=([-,0-9]*)\.\.([-,0-9]*),y=([-,0-9]*)\.\.([-,0-9]*),z=([-,0-9]*)\.\.([-,0-9]*)", line)
 		groups = match.groups()
 		if groups:
-			box = Box(int(groups[1]), int(groups[2])+1, int(groups[3]), int(groups[4])+1, int(groups[5]), int(groups[6])+1)
+			box = Box(int(groups[1]), int(groups[2])+1, int(groups[3]), int(groups[4])+1, int(groups[5]), int(groups[6])+1, 1 if groups[0] == "on" else -1)
 			if init and not bounds.contains(box):
 				print("Out of bouds: ", line, "SKIPPED")
 				continue
-			if len(boxes) == 0 and groups[0] == "on":
-				boxes.append(box)
 			else:
-				newBoxes = []
+				toAdd = []
 				for b in boxes:
-					if not box.contains(b):
-						splits = b.cut_by(box)
-						if len(splits) > 1:
-							for s in splits:
-								if not box.contains(s):
-									newBoxes.append(s)
-						else:
-							newBoxes.append(b)
-				if groups[0] == "on":
-					newBoxes.append(box)
-				boxes = newBoxes
+					if not b.overlaps(box):
+						continue
+					intersect = box.intersection(b)
+					intersect.polarity = b.polarity * -1
+					if intersect:
+						toAdd.append(intersect)
+				boxes += toAdd
+				if box.polarity == 1:
+					boxes.append(box)
 			print(lineCount, "/", len(inp), "# boxes:", len(boxes), "(%.8s s)" % (time.time() - start_time))
 		else:
 			print("could not parse:", line)
 
 	volume = 0
 	for b in boxes:
-		volume += b.volume()
+		volume += b.volume() * b.polarity
 	print(lineCount, "/", len(inp), "# boxes:", len(boxes), ", volume:", volume, "(%.8s s)" % (time.time() - start_time))
 
 
