@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import time
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -11,10 +12,10 @@ tests = []
 inp = ""
 isTest = False
 
-doTests = False
+doTests = True
 doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 X = 0
@@ -47,6 +48,7 @@ class Box:
 		else:
 			return [self]
 
+
 	def cut_by(self, other):
 		boxes = [self]
 		for a in range(0,3):
@@ -58,7 +60,7 @@ class Box:
 			for b in boxes:
 				sub += b.split(other.max[a], a)
 			boxes = sub
-		return boxes
+		return tuple(boxes)
 
 	def contains(self, other):
 		return self.min[X] <= other.min[X] and self.max[X] >= other.max[X] and self.min[Y] <= other.min[Y] and self.max[Y] >= other.max[Y] and self.min[Z] <= other.min[Z] and self.max[Z] >= other.max[Z]
@@ -82,60 +84,53 @@ class Box:
 		print(c.contains(a))
 
 
-def main_1(inp):
-	bounds = Box(-50, 51, -50, 51, -50, 51)
+def main(inp, init):
+	start_time = time.time()
+	if init:
+		bounds = Box(-50, 51, -50, 51, -50, 51)
 	boxes = []
+	lineCount = 0
 	for line in inp:
+		lineCount += 1
 		match = re.match("(on|off) x=([-,0-9]*)\.\.([-,0-9]*),y=([-,0-9]*)\.\.([-,0-9]*),z=([-,0-9]*)\.\.([-,0-9]*)", line)
 		groups = match.groups()
 		if groups:
 			box = Box(int(groups[1]), int(groups[2])+1, int(groups[3]), int(groups[4])+1, int(groups[5]), int(groups[6])+1)
-			# if not bounds.contains(box):
-			# 	print("Out of bouds: ", line, "SKIPPED")
-			# 	continue
+			if init and not bounds.contains(box):
+				print("Out of bouds: ", line, "SKIPPED")
+				continue
 			if len(boxes) == 0 and groups[0] == "on":
 				boxes.append(box)
-			elif groups[0] == "on":
-				pieces = [box]
-				# clip the new box with all the existing boxes that are on, and keep only the new parts
+			else:
+				newBoxes = []
 				for b in boxes:
-					newPieces = []
-					for p in pieces:
-						if b.contains(p):
-							continue
-						splits = p.cut_by(b)
-						for s in splits:
-							if not b.contains(s):
-								newPieces.append(s)
-					pieces = newPieces
-				boxes += pieces
-			elif groups[0] == "off":
-				replaceList = []
-				for b in boxes:
-					if box.contains(b):
-						replaceList.append([b, []])
-					else:
+					if not box.contains(b):
 						splits = b.cut_by(box)
 						if len(splits) > 1:
-							remains = []
 							for s in splits:
 								if not box.contains(s):
-									remains.append(s)
-							replaceList.append([b, remains])
-				for r in replaceList:
-					boxes.remove(r[0])
-					boxes += r[1]
-			volume = 0
-			for b in boxes:
-				volume += b.volume()
-			print("# boxes:", len(boxes), ", volume:", volume)	
+									newBoxes.append(s)
+						else:
+							newBoxes.append(b)
+				if groups[0] == "on":
+					newBoxes.append(box)
+				boxes = newBoxes
+			print(lineCount, "/", len(inp), "# boxes:", len(boxes), "(%.8s s)" % (time.time() - start_time))
 		else:
 			print("could not parse:", line)
 
+	volume = 0
+	for b in boxes:
+		volume += b.volume()
+	print(lineCount, "/", len(inp), "# boxes:", len(boxes), ", volume:", volume, "(%.8s s)" % (time.time() - start_time))
+
+
+def main_1(inp):
+	main(inp, True)
 
 
 def main_2(inp):
-	pass
+	main(inp, False)
 
 
 def read_input(filename):
