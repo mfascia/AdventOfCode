@@ -1,14 +1,14 @@
 import os
 import sys
 import queue
-from copy import deepcopy
+import heapq
 
 
 # GLOBALS --------------------------------------------------------------------------------------
 
 # for short input sets, it can be declared here instead of in seperate files
 # otherwise, tests go in files named AoC_xx_test_x.txt and input goes in AoC_xx_input.txt
-tests = []
+tests = [ "" ]
 inp = ""
 isTest = False
 
@@ -19,145 +19,140 @@ enablePart2 = False
 #-----------------------------------------------------------------------------------------------
 
 
-DOORS = {
-	"A": 2,
-	"B": 4,
-	"C": 6,
-	"D": 8
-}
 
 VALID_CORRIDOR_POSITIONS = [0, 1, 3, 5, 7, 9, 10]
-
-ENERGY_COSTS = {
-	"A": 1,
-	"B": 10,
-	"C": 100,
-	"D": 1000
-}
+ROOM_SIZE = 2
 
 
-def printStep(corridor, rooms):
-	print("#############")
-	print("#"+corridor+"#")
-	print("#############")
-	print(rooms)
+def rooms_from_string(string, size=ROOM_SIZE):
+	rooms = []
+	for i in range(4):
+		rooms.append(string[size*i:size*(i+1)].replace(".", ""))
+	return rooms
+
+def rooms_to_string(rooms, size=ROOM_SIZE):
+	string = ""
+	for i in range(4):
+		string += rooms[i]
+		for j in range(len(rooms[i]), size):
+			string +="." 
+	return string
+
+def is_room_ready(room, letter):
+	return all(map(lambda x: x==letter.lower(), room))
 
 
-def hash_state(state):
-	s = state[0]
-	for t, r in state[1].items():
-		s += "".join(r)
-	return hash(s) 
+def is_path_clear(corridor, pod, entrance, includePod):
+	if pod < entrance:
+		start = pod if includePod else pod+1
+		end = entrance
+	else:
+		start = entrance
+		end = pod if includePod else pod-1
+	
+	clear  = True
+	dist = 0
+	for i in range(start, end):
+		dist += 1
+		if corridor[i] != ".":
+			clear = False
+			break
+
+	return clear, dist
 
 
 def main_1(inp):
-	corridor = "..........."
-	rooms = {
-		"A": ["A", "B"],
-		"B": ["D", "C"],
-		"C": ["C", "B"],
-		"D": ["A", "D"],
-		# "A": ["C", "C"],
-		# "B": ["A", "A"],
-		# "C": ["D", "B"],
-		# "D": ["B", "D"],
-	}
+	initialState = "...........ABDCCBAD"
 
-	toVisit = queue.PriorityQueue()
+	# toVisit = queue.PriorityQueue()
+	toVisit = []
 	visited = {}
 
-	toVisit.put((0, (corridor, rooms), None))
+	# toVisit.put((0, initialState, None))
+	heapq.heappush( toVisit, (0, initialState, None))
 
-	while not toVisit.empty():
-		print(toVisit.qsize())
+	costs = {}
 
-		node = toVisit.get()
+	while len(toVisit) > 0:
+
+
+		node = heapq.heappop(toVisit)
+		print(len(toVisit), node)
+
 		currCost = node[0]
+
 		currState = node[1]
-		ch = hash_state(currState)
-		currCorridor = currState[0]
-		currRooms = currState[1]
+
 		prev = node[2]
 
-		visited[ch] = (currCost, currState, prev)
+		currCorridor = currState[:11]
+		currRoomsString = currState[11:]
+		currRooms = rooms_from_string(currRoomsString)
+
+		for roomIndex in range(4):
+			room = currRooms[roomIndex]
+			if len(room) > 0 and room[-1].isupper():
+				c = room[-1]
+				entrance = (roomIndex)*2 + 2
+				for x in VALID_CORRIDOR_POSITIONS:
+					clear, dist = is_path_clear(currCorridor, x, entrance, True)
+					if clear:
+						dist += ROOM_SIZE - len(room)
+						newCorridor = currCorridor[0:x] + c + currCorridor[x+1:]
+						newRooms = [cr for cr in currRooms]
+						newRooms[roomIndex] = newRooms[roomIndex][:-1]
+						newRoomsString = rooms_to_string(newRooms)
+						newState = newCorridor + newRoomsString
+						newCost = currCost + dist * 10 ** (roomIndex)
+						if not newState in visited or visited[newState][0] > newCost:
+							newTuple = (newCost, newState, currState)
+							visited[newState] = newTuple
+							heapq.heappush(toVisit, newTuple)
+					else:
+						break
+
 
 		for x in range(11):
 			c = currCorridor[x]
 			if c == ".":
 				continue
 			elif c in "ABCD":
-				room = currRooms[c]
-				if len(room) == 0 or all(map(lambda x: x==c.lower(), room)):
-				# if len(room) == 0 or room[0] == c.lower():
-					entrance = DOORS[c]
-					clear = True
-					if x < entrance:
-						for i in range(x+1, entrance):
-							if currCorridor[i] != ".":
-								clear = False
-								break
-					else:
-						for i in range(entrance, x):
-							if currCorridor[i] != ".":
-								clear = False
-								break
+				roomIndex = ord(c) - ord("A")
+				room = currRooms[roomIndex]
+				entrance = (roomIndex) * 2 + 2
+				if is_room_ready(room, c):
+					clear, dist = is_path_clear(currCorridor, x, entrance, False)
 					if clear:
+						dist += ROOM_SIZE - len(room)
 						newCorridor = currCorridor[0:x] + "." + currCorridor[x+1:]
-						newRooms = deepcopy(currRooms)
-						newRooms[c].append(c.lower())
-						newState = (newCorridor, newRooms)
-						nh = hash_state(newState)
-						newCost = currCost + (max(x, entrance) - min(x, entrance) + 1) * ENERGY_COSTS[c]
-						if nh in visited:
-							if visited[nh][0] > newCost:
-								visited[nh][0] = newCost
-								visited[nh][1] = newState
-								visited[nh][2] = currState
-						else:
-							toVisit.put((newCost, newState, currState))
+						newRooms = [cr for cr in currRooms]
+						newRooms[roomIndex] += c.lower()
+						newRoomsString = rooms_to_string(newRooms)
+						if newRoomsString == "aabbccdd":
+							print("reached the goal!!!!")
+						newState = newCorridor + newRoomsString
+						newCost = currCost + dist * 10 ** (roomIndex)
+						if not newState in visited or visited[newState][0] > newCost:
+							newTuple = (newCost, newState, currState)
+							visited[newState] = newTuple
+							heapq.heappush(toVisit, newTuple)
 
-		for c, r in currRooms.items():
-			if len(r) > 0 and r[-1].isupper():
-				entrance = DOORS[c]
-				for x in VALID_CORRIDOR_POSITIONS:
-					clear = True
-					for i in range(min(x, entrance), max(x,entrance)+1):
-						if currCorridor[i] != ".":
-							clear = False
-							break
-					if clear:
-						newCorridor = currCorridor[0:x] + r[-1] + currCorridor[x+1:]
-						newRooms = deepcopy(currRooms)
-						newRooms[c].pop()
-						newState = (newCorridor, newRooms)
-						nh = hash_state(newState)
-						newCost = currCost + (max(x, entrance) - min(x, entrance) + 1) * ENERGY_COSTS[c]
-						if nh in visited: 
-							if visited[nh][0] > newCost:
-								visited[nh][0] = newCost
-								visited[nh][1] = newState
-								visited[nh][2] = currState
-						else:
-							toVisit.put((newCost, newState, currState))
 
-	goal = ( "...........", {
-		"A": ["a", "a"],
-		"B": ["b", "b"],
-		"C": ["c", "c"],
-		"D": ["d", "d"],
-	})
+
+	goal = "...........aabbccdd"
 
 	node = goal
 	path = []
 	while node:
+		print(visited[node][0], node[:11], node[11:])
 		path.append(node)
-		node = visited[hash_state(node)][2]
+		node = visited[node][2]
 
 	path = reversed(path)
 	for p in path:
-		printStep(p[0], p[1])
+		print(p[:11], p[11:])
 
-	print(visited[hash_state(goal)])
+	print(visited[goal])
 
 
 
