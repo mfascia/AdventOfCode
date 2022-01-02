@@ -9,28 +9,65 @@ import heapq
 # for short input sets, it can be declared here instead of in seperate files
 # otherwise, tests go in files named AoC_xx_test_x.txt and input goes in AoC_xx_input.txt
 tests = [ "" ]
-inp = ""
+inp = "  "
 isTest = False
 
-doTests = True
-doInput = False
-enablePart1 = True
-enablePart2 = False
+doTests = False
+doInput = True
+enablePart1 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
+def djikstra(start, goal, nextFct):
+	costs = {}
+	predecessors = {}
+	toVisit = queue.PriorityQueue()
+
+	toVisit.put((0, start))
+	predecessors[start] = None
+	costs[start] = 0
+	found = False
+
+	while not toVisit.empty():
+		print(toVisit.qsize())
+		currentCost, currentNode = toVisit.get()
+		if currentNode == goal:
+			found = True
+			break
+		nextNodes, nextCosts = nextFct(currentNode)
+		for i in range(len(nextNodes)):
+			nextNode = nextNodes[i]
+			nextCost = currentCost + nextCosts[i]
+			
+			if nextNode in costs and costs[nextNode] <= nextCost:
+				continue
+		
+			costs[nextNode] = nextCost
+			predecessors[nextNode] = currentNode
+			toVisit.put((nextCost, nextNode))
+
+	if found:
+		path = []
+		node = goal
+		while node != None:
+			path.append(node)
+			node = predecessors[node]
+		return reversed(path), costs[goal], predecessors, costs
+	else:
+		return [], -1, [], []
+
 
 VALID_CORRIDOR_POSITIONS = [0, 1, 3, 5, 7, 9, 10]
-ROOM_SIZE = 2
 
 
-def rooms_from_string(string, size=ROOM_SIZE):
+def rooms_from_string(string, size):
 	rooms = []
 	for i in range(4):
 		rooms.append(string[size*i:size*(i+1)].replace(".", ""))
 	return rooms
 
-def rooms_to_string(rooms, size=ROOM_SIZE):
+def rooms_to_string(rooms, size):
 	string = ""
 	for i in range(4):
 		string += rooms[i]
@@ -52,7 +89,7 @@ def is_path_clear(corridor, pod, entrance, includePod):
 	
 	clear  = True
 	dist = 0
-	for i in range(start, end):
+	for i in range(start, end+1):
 		dist += 1
 		if corridor[i] != ".":
 			clear = False
@@ -61,103 +98,103 @@ def is_path_clear(corridor, pod, entrance, includePod):
 	return clear, dist
 
 
-def main_1(inp):
-	initialState = "...........ABDCCBAD"
+def nextStates(currState, roomSize):
+	nextStates = []
+	nextCosts = []
 
-	# toVisit = queue.PriorityQueue()
-	toVisit = []
-	visited = {}
+	currCorridor = currState[:11]
+	currRoomsString = currState[11:]
+	currRooms = rooms_from_string(currRoomsString, roomSize)
 
-	# toVisit.put((0, initialState, None))
-	heapq.heappush( toVisit, (0, initialState, None))
+	for roomIndex in range(4):
+		room = currRooms[roomIndex]
+		if len(room) > 0 and room[-1].isupper():
+			c = room[-1]
+			entrance = (roomIndex)*2 + 2
+			for x in VALID_CORRIDOR_POSITIONS:
+				clear, dist = is_path_clear(currCorridor, x, entrance, True)
+				if clear:
+					newCorridor = currCorridor[0:x] + c + currCorridor[x+1:]
+					newRooms = [cr for cr in currRooms]
+					newRooms[roomIndex] = newRooms[roomIndex][:-1]
+					newRoomsString = rooms_to_string(newRooms, roomSize)
+					newState = newCorridor + newRoomsString
+					nextStates.append(newState)
+					dist += roomSize - len(room)
+					nextCosts.append(dist * 10 ** "ABCD".index(c))
 
-	costs = {}
-
-	while len(toVisit) > 0:
-
-
-		node = heapq.heappop(toVisit)
-		print(len(toVisit), node)
-
-		currCost = node[0]
-
-		currState = node[1]
-
-		prev = node[2]
-
-		currCorridor = currState[:11]
-		currRoomsString = currState[11:]
-		currRooms = rooms_from_string(currRoomsString)
-
-		for roomIndex in range(4):
+	for x in range(11):
+		c = currCorridor[x]
+		if c == ".":
+			continue
+		elif c in "ABCD":
+			roomIndex = ord(c) - ord("A")
 			room = currRooms[roomIndex]
-			if len(room) > 0 and room[-1].isupper():
-				c = room[-1]
-				entrance = (roomIndex)*2 + 2
-				for x in VALID_CORRIDOR_POSITIONS:
-					clear, dist = is_path_clear(currCorridor, x, entrance, True)
-					if clear:
-						dist += ROOM_SIZE - len(room)
-						newCorridor = currCorridor[0:x] + c + currCorridor[x+1:]
-						newRooms = [cr for cr in currRooms]
-						newRooms[roomIndex] = newRooms[roomIndex][:-1]
-						newRoomsString = rooms_to_string(newRooms)
-						newState = newCorridor + newRoomsString
-						newCost = currCost + dist * 10 ** (roomIndex)
-						if not newState in visited or visited[newState][0] > newCost:
-							newTuple = (newCost, newState, currState)
-							visited[newState] = newTuple
-							heapq.heappush(toVisit, newTuple)
-					else:
-						break
+			entrance = (roomIndex) * 2 + 2
+			if is_room_ready(room, c):
+				clear, dist = is_path_clear(currCorridor, x, entrance, False)
+				if clear:
+					newCorridor = currCorridor[0:x] + "." + currCorridor[x+1:]
+					newRooms = [cr for cr in currRooms]
+					newRooms[roomIndex] += c.lower()
+					newRoomsString = rooms_to_string(newRooms, roomSize)
+					newState = newCorridor + newRoomsString
+					nextStates.append(newState)
+					dist += roomSize - len(room)
+					nextCosts.append(dist * 10 ** (roomIndex))
+
+	return nextStates, nextCosts
 
 
-		for x in range(11):
-			c = currCorridor[x]
-			if c == ".":
-				continue
-			elif c in "ABCD":
-				roomIndex = ord(c) - ord("A")
-				room = currRooms[roomIndex]
-				entrance = (roomIndex) * 2 + 2
-				if is_room_ready(room, c):
-					clear, dist = is_path_clear(currCorridor, x, entrance, False)
-					if clear:
-						dist += ROOM_SIZE - len(room)
-						newCorridor = currCorridor[0:x] + "." + currCorridor[x+1:]
-						newRooms = [cr for cr in currRooms]
-						newRooms[roomIndex] += c.lower()
-						newRoomsString = rooms_to_string(newRooms)
-						if newRoomsString == "aabbccdd":
-							print("reached the goal!!!!")
-						newState = newCorridor + newRoomsString
-						newCost = currCost + dist * 10 ** (roomIndex)
-						if not newState in visited or visited[newState][0] > newCost:
-							newTuple = (newCost, newState, currState)
-							visited[newState] = newTuple
-							heapq.heappush(toVisit, newTuple)
+def print_state(state, roomSize):
+	print(".-----------.")
+	print("|"+state[:11]+"|")
+	for r in range(roomSize-1, -1, -1):
+		print("'-|"+state[11+r]+"|"+state[11+roomSize+r]+"|"+state[11+2*roomSize+r]+"|"+state[11+3*roomSize+r]+"|-'")
+	print("  '-------'")
 
 
+def main(initial, goal, roomSize):
+	roomsString = initial[11:]
+	rooms = rooms_from_string(roomsString, roomSize)
+	for r in range(4):
+		tmp = ""
+		canPin = True
+		for i in range(len(rooms[r])):
+			if canPin and rooms[r][i] == chr(ord("A")+r):
+				tmp += rooms[r][i].lower()
+			else:
+				canPin = False
+				tmp += rooms[r][i]
+		rooms[r] = tmp
 
-	goal = "...........aabbccdd"
+	initial = initial[:11] + rooms_to_string(rooms, roomSize)
 
-	node = goal
-	path = []
-	while node:
-		print(visited[node][0], node[:11], node[11:])
-		path.append(node)
-		node = visited[node][2]
-
-	path = reversed(path)
+	path, cost, preds, costs = djikstra(initial, goal, lambda x: nextStates(x, roomSize))
 	for p in path:
-		print(p[:11], p[11:])
+		print_state(p, roomSize)
+		print(costs[p])
+	print(cost)
 
-	print(visited[goal])
 
+def main_1(inp):
+	roomSize = 2
+	if isTest:
+		initial = "...........ABDCCBAD"
+	else:
+		initial = "...........CCAADBBD"
+	goal = "...........aabbccdd"
+	main(initial, goal, roomSize)
 
 
 def main_2(inp):
-	pass
+	roomSize = 4
+	if isTest:
+		initial = "...........ADDBDBCCCABBACAD"
+	else:
+		initial = "...........CDDCABCADABBBCAD"
+	goal = "...........aaaabbbbccccdddd"
+	main(initial, goal, roomSize)
 
 
 def read_input(filename):
