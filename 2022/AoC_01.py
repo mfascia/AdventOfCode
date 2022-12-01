@@ -11,18 +11,48 @@ inp = ""
 isTest = False
 
 doTests = True
-doInput = False
+doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
 def main_1(inp):
-	pass
+	cal = 0
+	maxCal = 0
+	index = 0
+	maxIndex = 0
+
+	for line in inp:
+		if len(line) == 0:
+			if cal > maxCal:
+				maxCal = cal
+				maxIndex = index
+			cal = 0
+			index += 1
+		else:
+			cal += int(line)
+	if cal > maxCal:
+		maxCal = cal
+		maxIndex = index
+	print(maxIndex, maxCal)
 
 
 def main_2(inp):
-	pass
+	cal = 0
+	index = 0
+	totals = []
+	for line in inp:
+		if len(line) == 0:
+			totals.append([index, cal])
+			cal = 0
+			index += 1
+		else:
+			cal += int(line)
+	totals.append([index, cal])
+	totals.sort(key=(lambda x: x[1]), reverse=True)
+	top3 = totals[0][1] + totals[1][1] + totals[2][1]
+	print(totals[0], totals[1], totals[2], "-->", top3)
 
 
 def read_input(filename):
