@@ -26,14 +26,17 @@ def parseInput(inp):
 			lineBreak += 1
 			break
 		txtStacks.append(line)
-
+	
+	# Transpose columns to lines
 	transposed = ["" for x in txtStacks[0]]
 	for y in range(0, len(txtStacks)):
 		for x in range(0, len(txtStacks[y])):
 			transposed[x] += txtStacks[y][x]
 
+	# ditch any line that is not letters and reverse the ones we keep
 	stacks = [[y for y in x[::-1].strip(" ")] for x in transposed if x[::-1].strip(" ").isalnum()]
 
+	# move format: [nb of crates, src, dst]
 	moves = []
 	inp = inp[lineBreak:]
 	for line in inp:
