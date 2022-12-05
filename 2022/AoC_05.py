@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -16,44 +17,68 @@ enablePart1 = True
 enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
-#     L0----------------L1
-#           R0-----R1
-#
-#     R0----------------R1
-#           L0-----L1
+def parseInput(inp):
+	lineBreak = 0
+	txtStacks = []
+	for line in inp:
+		lineBreak += 1
+		if "1" in line:
+			lineBreak += 1
+			break
+		txtStacks.append(line)
+
+	transposed = ["" for x in txtStacks[0]]
+	for y in range(0, len(txtStacks)):
+		for x in range(0, len(txtStacks[y])):
+			transposed[x] += txtStacks[y][x]
+
+	stacks = [[y for y in x[::-1].strip(" ")] for x in transposed if x[::-1].strip(" ").isalnum()]
+
+	moves = []
+	inp = inp[lineBreak:]
+	for line in inp:
+		m = re.match("move ([0-9]*) from ([0-9]*) to ([0-9]*)", line)
+		moves.append([int(x) for x in m.groups()])
+
+	return stacks, moves
+
+
 def main_1(inp):
-	count = 0
-	for line in inp:
-		split = line.split(",")
-		left = [int(x) for x in split[0].split("-")]
-		right = [int(x) for x in split[1].split("-")]
-		if (left[0] >= right[0] and left[1] <= right[1]) or (right[0] >= left[0] and right[1] <= left[1]):
-			#print(left, right)
-			count += 1
-	print(count)
+	stacks, moves = parseInput(inp)
+
+	for m in moves:
+		for i in range(0,m[0]):
+			c = stacks[m[1]-1].pop()
+			stacks[m[2]-1].append(c)
+
+	top = ""
+	for s in stacks:
+		top += s[-1]
+
+	print(top)
 
 
-#     L0---------L1
-#         R0----------R1
-#
-#     R0---------R1
-#         L0----------L1
 def main_2(inp):
-	count = 0
-	for line in inp:
-		split = line.split(",")
-		left = [int(x) for x in split[0].split("-")]
-		right = [int(x) for x in split[1].split("-")]
-		if (left[0] <= right[0] and right[0] <= left[1]) or (right[0] <= left[0] and left[0] <= right[1]):
-			#print(left, right)
-			count += 1
-	print(count)
+	stacks, moves = parseInput(inp)
+
+	for m in moves:
+		buf = []
+		for i in range(0,m[0]):
+			c = stacks[m[1]-1].pop()
+			buf.append(c)
+		stacks[m[2]-1] += buf[::-1]
+
+	top = ""
+	for s in stacks:
+		top += s[-1]
+
+	print(top)
 
 
 def read_input(filename):
 	with open(filename, "r") as f:
 		raw = f.readlines()
-	stream = map(lambda x: x.strip(" \n\t"), raw)
+	stream = map(lambda x: x.strip("\n\t"), raw)
 	return stream
 	
 
