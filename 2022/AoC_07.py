@@ -17,6 +17,18 @@ enablePart1 = True
 enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
+
+def print_dir(dir, level):
+	spaces = "".join(["+--" for x in range(0, level)])
+	print(spaces + "> " + dir["name"], "(", dir["size"], ")")
+	
+	for k,v in dir["content"].items():
+		if v["type"] == "directory":
+			print_dir(v, level+1)
+		else:
+			print( spaces + "+--+ " + v["name"], "(", v["size"], ")")
+
+		
 def calc_size(node):
 	s = 0
 	for k, v in node["content"].items():
@@ -94,6 +106,7 @@ def find_big_folders(node, size, folders):
 
 def main_1(inp):
 	root = build_tree(inp)
+	#print_dir(root, 0)
 	small = []
 	find_small_folders(root, 100000, small)
 	total = sum(map(lambda x: x["size"], small))
