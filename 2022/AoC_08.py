@@ -1,6 +1,6 @@
 import os
 import sys
-from PIL import Image, ImageDraw
+from PIL import Image
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -29,7 +29,6 @@ def save_grid(grid, suffix, scale):
 	sx = len(grid)
 	sy = len(grid[1])
 	im = Image.new(mode="RGB", size=(sx, sy))	
-	draw = ImageDraw.Draw(im)
 	for y in range(sy):
 		for x in range(sx):
 			c = int(scale * float(grid[y][x])) 
