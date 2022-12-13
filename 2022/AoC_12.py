@@ -13,7 +13,7 @@ isTest = False
 
 doTests = True
 doInput = True
-enablePart1 = True
+enablePart1 = False
 enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ enablePart2 = True
 # 4-adjacency neighbours
 NEIGHBOURS =[[0, -1], [-1, 0], [1, 0],[0, 1]]
 
-def find_shortest_path(grid, start, end, checkNeighbour=(lambda grid, a, b: True), cost=(lambda grid, a, b: 1)):
+def distance_from_point(grid, start, checkNeighbour=(lambda grid, a, b: True), cost=(lambda grid, a, b: 1)):
 	sx = len(grid[0])
 	sy = len(grid)
 	costs = {}
@@ -45,6 +45,12 @@ def find_shortest_path(grid, start, end, checkNeighbour=(lambda grid, a, b: True
 				froms[n] = p
 				toVisit.put([n, c])
 
+	return froms
+
+
+def find_shortest_path(grid, start, end, checkNeighbour=(lambda grid, a, b: True), cost=(lambda grid, a, b: 1)):
+	froms = distance_from_point(grid, start, checkNeighbour, cost)
+
 	path = []
 	p = end
 	while p != (-1, -1):
@@ -52,7 +58,7 @@ def find_shortest_path(grid, start, end, checkNeighbour=(lambda grid, a, b: True
 		p = froms[p]
 	path = [x for x in reversed(path)]
 
-	return path, froms
+	return path
 
 
 def read_heightmap(inp):
@@ -74,7 +80,7 @@ def read_heightmap(inp):
 	return hm, start, end
 
 
-def check_neighbour(grid, a, b):
+def check_neighbour_going_up(grid, a, b):
 	if (ord(grid[b[1]][b[0]]) > ord(grid[a[1]][a[0]]) + 1):
 		return False
 	return True
@@ -87,7 +93,7 @@ def main_1(inp):
 		print("".join(row))
 	print(start, end)
 
-	path, _ = find_shortest_path(hm, start, end, checkNeighbour=check_neighbour )
+	path = find_shortest_path(hm, start, end, checkNeighbour=check_neighbour_going_up )
 
 	for y in range(len(inp)):
 		txt = ""
@@ -101,6 +107,12 @@ def main_1(inp):
 	print(len(path)-1) # removing 1 to not count the starting position
 
 
+def check_neighbour_going_down(grid, a, b):
+	if (ord(grid[a[1]][a[0]]) > ord(grid[b[1]][b[0]]) + 1):
+		return False
+	return True
+
+
 def main_2(inp):
 	hm, start, end = read_heightmap(inp)
 
@@ -108,18 +120,38 @@ def main_2(inp):
 		print("".join(row))
 	print(start, end)
 
-	# djikstra
+	froms = distance_from_point(hm, end, check_neighbour_going_down )
 
+	shortest = 1000000
+	shortestPath = []
+
+	for y in range(len(inp)):
+		for x in range(len(inp[0])):
+			if hm[y][x] == "a":
+				path = []
+				p = (x, y)
+				print("Considering", p, "...")
+				while p != (-1, -1):
+					path.append(p)
+					p = froms[p] if p in froms else (-1, -1)
+				if len(path) > 1 and len(path) < shortest:
+					shortest = len(path)
+					shortestPath = path
+				print("... and found a path of length", len(path))
+	
+	shortestPath = [x for x in reversed(shortestPath)]
 
 	for y in range(len(inp)):
 		txt = ""
 		for x in range(len(inp[0])):
-			if (x, y) in path:
+			if (x, y) in shortestPath:
 				txt += "#"
 			else:
 				txt += "."
 		print(txt)
 	
+	print(len(shortestPath)-1)
+
 
 def read_input(filename):
 	with open(filename, "r") as f:
