@@ -17,7 +17,6 @@ enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 def compare_lists(a, b, lvl=0):
-
 	if isTest:
 		print("".join([" " for x in range(4*lvl)]), "Compare", a, "vs", b)
 	
