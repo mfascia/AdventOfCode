@@ -86,7 +86,7 @@ def read_values(inp, multiplier):
 
 def mix(initial, queue):
 	for i in initial:
-		j = abs(i.data) % (queue.size-1)
+		j = abs(i.data) % (queue.size-1) # mod size -1 because the item being moved does not count
 		if i.data > 0:
 			n = i
 			for k in range(j):
