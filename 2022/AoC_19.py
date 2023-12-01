@@ -12,10 +12,10 @@ tests = []
 inp = ""
 isTest = False
 
-doTests = False
+doTests = True
 doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
@@ -42,6 +42,7 @@ class State:
 		self.robots_obsidian = 0
 		self.robots_geode = 0
 
+
 	def __str__(self):
 		return	"time: "  + str(self.time) + ", " + \
 				"resources: [" + str(self.ore) + ", " + str(self.clay) + ", " + str(self.obsidian) + ", " + str(self.geode) + "], " + \
@@ -60,58 +61,65 @@ class State:
 		self.geode += self.robots_geode
 
 
-	def next(self, blueprint):
-		if self.time >= 24:
-			return []
-		
+	def next(self, blueprint, timeLimit, currMax=0):
 		states = []
-		# # collect from the robots that currently exist
-		# self.tick()
 
-		# always make geode robots if possible
+		# assuming we can build a geode robot every remaining minute, can we beat the current max?
+		# if not, bail
+		timeLeft = timeLimit - self.time
+		if currMax >= self.geode + int(timeLeft*(timeLeft+1)*0.5) + self.robots_geode*timeLeft:
+			return []
+
+		# try make and geode robot if we can produce ore and obsidian
 		if self.robots_obsidian > 0 and self.robots_ore > 0:
 			s = copy.copy(self)
 			s.parent = self
 			while s.obsidian < blueprint.geode_obsidian or s.ore < blueprint.geode_ore:
 				s.tick()
-			s.obsidian -= blueprint.geode_obsidian
-			s.ore -= blueprint.geode_ore
-			s.tick()
-			s.robots_geode += 1
-			states.append(s)
-
-		# try building obsidian robot
-		if self.robots_clay > 0 and self.robots_ore > 0:
+			if s.time < timeLimit-1:	# it will take at best 1 minutes for this new robot to contribute towards a geode (robot_geode > geode)
+				s.tick()
+				s.obsidian -= blueprint.geode_obsidian
+				s.ore -= blueprint.geode_ore
+				s.robots_geode += 1
+				states.append(s)
+				
+		# try make an obsidian robot if we can produce ore and clay and we are bottlenecked by obsidian production
+		if self.robots_clay > 0 and self.robots_ore > 0 and self.robots_obsidian < blueprint.geode_obsidian:
 			s = copy.copy(self)
 			s.parent = self
 			while s.clay < blueprint.obsidian_clay or s.ore < blueprint.obsidian_ore:
 				s.tick()
-			s.clay -= blueprint.obsidian_clay
-			s.ore -= blueprint.obsidian_ore
-			s.tick()
-			s.robots_obsidian += 1
-			states.append(s)
+			if s.time < timeLimit-3:	# it will take at best 3 minutes for this new robot to contribute towards a geode (robot_obsidian > obsidian > robot_geode > geode)
+				s.tick()
+				s.clay -= blueprint.obsidian_clay
+				s.ore -= blueprint.obsidian_ore
+				s.robots_obsidian += 1
+				states.append(s)
 
-		# try building clay robot
-		if self.robots_ore > 0:
+		# try building clay robot and we are bottlenecked by clay production
+		if self.robots_ore > 0 and self.robots_clay < blueprint.obsidian_clay:
 			s = copy.copy(self)
 			s.parent = self
 			while s.ore < blueprint.clay_ore:
 				s.tick()
-			s.ore -= blueprint.clay_ore
-			s.tick()
-			s.robots_clay += 1
-			states.append(s)
+			if s.time < timeLimit-5:	# it will take at best 5 minutes for this new robot to contribute towards a geode (robot_clay > clay > robot_obsidian > obsidian > robot_geode > geode)
+				s.tick()
+				s.ore -= blueprint.clay_ore
+				s.robots_clay += 1
+				states.append(s)
 
-		# try building ore robot
-		if self.robots_ore > 0  and self.robots_clay <= 1:
+		# try building ore robot and we are bottlenecked by ore production
+		#if self.robots_ore > 0 and self.robots_ore < blueprint.clay_ore:
+		if self.robots_ore > 0 and self.robots_clay == 0:		# this is faster but I'm not sure it works with different input data
 			s = copy.copy(self)
+			s.parent = self
 			while s.ore < blueprint.ore_ore:
 				s.tick()
-			s.ore -= blueprint.ore_ore
-			s.tick()
-			s.robots_ore += 1
-			states.append(s)
+			if s.time < timeLimit-1:
+				s.tick()
+				s.ore -= blueprint.ore_ore
+				s.robots_ore += 1
+				states.append(s)
 		
 		return states
 
@@ -134,41 +142,66 @@ def read_blueprints(inp):
 
 def main_1(inp):
 	blueprints = read_blueprints(inp)
-	
-	quality = []
+
+	q = 0
+
 	for bp in blueprints.values():
 		maxGeode = 0
 		maxState = None
-		
-		s = State()
-		queue = [s]
-		i = 0
-		while i < len(queue):
-			if queue[i].geode > maxGeode:
-				maxGeode = queue[i].geode
-				maxState = queue[i]
-		
-			nx = queue[i].next(bp)
-			for n in nx:
-				if n.time <= 24:		
-					queue.append(n)
-			i += 1
-		
-		print( maxGeode, bp.id, maxGeode * bp.id)
-		
-		s = maxState
-		while s:
-			print(s)
-			s = s.parent
-		print()
-		
-		quality.append(maxGeode * bp.id)
 
-	print(sum(quality))
+		s = State()
+		next = []
+		next.append(s)
+		while len(next) > 0:
+			st = next.pop(0)
+			neighbours = st.next(bp, 24, maxGeode)
+			if len(neighbours) == 0:
+				while st.time < 24:
+					st.tick()
+				if maxGeode < st.geode:
+					maxGeode = st.geode
+					maxState = st
+				continue
+			for n in neighbours:
+				if not n in next:		
+					next.append(n)
+
+		print("Evaluating Blueprint", bp.id, "Max geode(s):", maxGeode, "Details:", maxState)
+		q += bp.id * maxGeode
+
+	print("Sum of quality levels:", q)
 
 
 def main_2(inp):
-	pass
+	blueprints = read_blueprints(inp)
+
+	q = 1
+
+	for bp in [x for x in blueprints.values()][0:3]:
+		maxGeode = 0
+		maxState = None
+
+		s = State()
+		next = []
+		next.append(s)
+		while len(next) > 0:
+			st = next.pop()
+			neighbours = st.next(bp, 32, maxGeode)	
+			if len(neighbours) == 0:
+				while st.time < 32:
+					st.tick()
+				if maxGeode < st.geode:
+					maxGeode = st.geode
+					maxState = st
+				continue
+			for n in neighbours:
+				if not n in next:		
+					next.append(n)
+
+		print("Evaluating Blueprint", bp.id, "Max geode(s):", maxGeode, "Details:", maxState)
+		q *= maxGeode
+
+	print("result", q)
 
 
 def read_input(filename):
