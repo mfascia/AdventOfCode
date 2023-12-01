@@ -52,80 +52,11 @@ def find_right_digit(text):
 				return str(STIGID.index(d))
 	return ""
 
-
 def main_2(inp):
 	sum = 0
 	for line in inp:
 		code = find_left_digit(line) + find_right_digit(line)
-		print(line, code)
 		sum += int(code)
-	print(sum)
-
-
-def main_2old(inp):
-	sum = 0
-	for line in inp:
-		orig = line
-		
-		num = ""
-		
-		#find first digit
-		leftDigitIndex = -1
-		leftDigitValue = ""
-		for i in range(len(line)):
-			if line[i] in "0123456789":
-				leftDigitIndex = i
-				leftDigitValue = line[i]
-				break
-
-		# find first occurence
-		leftWordIndex = -1
-		leftWordValue = ""
-		for d in range(len(DIGITS)):
-			p = line.find(DIGITS[d])
-			if p != -1 and p < leftWordIndex:
-				leftWordValue = d
-		if leftDigitIndex == -1:
-			num += leftWordValue
-		elif leftWordIndex == -1:
-			num += leftDigitValue
-		elif leftDigitIndex < leftWordIndex:
-			num += leftDigitValue
-		else:
-			num += leftWordValue
-
-		#find last digit
-		rightDigitIndex = -1
-		rightDigitValue = ""
-		rline = line[::-1]
-		for i in range(len(rline)):
-			if rline[i] in "0123456789":
-				rightDigitIndex = len(rline)-i-1
-				rightDigitValue = rline[i]
-				break
-
-		# find last occurence
-		rightWordIndex = -1
-		rightWordValue = ""
-		for d in range(len(DIGITS)):
-			p = line.rfind(DIGITS[d])
-			if p != -1 and p > rightWordIndex:
-				rightWordValue = d
-		if rightDigitIndex == -1:
-			num += rightWordValue
-		elif rightWordIndex == -1:
-			num += rightDigitValue
-		elif rightDigitIndex > rightWordIndex:
-			num += rightDigitValue
-		else:
-			num += rightWordValue
-
-		if len(num) == 1:
-			num += num[0]
-
-		if len(num) > 0:
-			sum += int(num)
-		print(orig, line, num)
 	print(sum)
 
 
