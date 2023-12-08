@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import math
 import json
 
 
@@ -13,7 +14,7 @@ inp = ""
 isTest = False
 
 doTests = True
-doInput = False
+doInput = True
 enablePart1 = True
 enablePart2 = True
 #-----------------------------------------------------------------------------------------------
@@ -23,47 +24,64 @@ def parse(text):
 	moves = text[0]
 	nodes = {}	
 	for i in range(2, len(text)):
-		node, left, right = re.match("([A-Z]*) = \(([A-Z]*), ([A-Z]*)\)", text[i]).groups()
+		node, left, right = re.match("([0-9A-Z]*) = \(([0-9A-Z]*), ([0-9A-Z]*)\)", text[i]).groups()
 		nodes[node] = [left, right]
 
-	print(json.dumps(nodes, indent=4))
 	return moves, nodes
 	
 
 def main_1(inp):
 	moves, nodes = parse(inp)
+	if "AAA" not in nodes.keys():
+		return
+	
 	curr = "AAA"
-	i = 0
+	m = 0
 	steps = 0
-	print(curr)
 	while curr != "ZZZ":
-		m = 0 if moves[i] == "L" else 1
-		curr = nodes[curr][m]
-		print(curr)
-		i = (i+1) % len(moves)
+		move = 0 if moves[m] == "L" else 1
+		curr = nodes[curr][move]
+		m = (m+1) % len(moves)
 		steps += 1
 	print(steps)
 
 
+# This works because:
+# - Each ghost is on a loop that start at step 0 
+# - Each ghost always land the same endpoint and only htat one in its cycle
 def main_2(inp):
 	moves, nodes = parse(inp)
-	ghosts = [x for x in nodes.keys() if x[2] == "Z"]
+	ghosts = [x for x in nodes.keys() if x[2] == "A"]
+	print(len(ghosts), "ghosts")
 
-	i = 0
+	exits = [[] for g in ghosts]
+
+	phases = [-1 for g in ghosts]
+	freqs = [-1 for g in ghosts]
+
+	m = 0
 	steps = 0
-
 	while True:
-		m = 0 if moves[i] == "L" else 1
-		for i in range(len(ghosts)):
-			ghosts[i] = nodes[ghosts[i]][m]
-			i = (i+1) % len(moves)
-			steps += 1
-		s = sum([1 for x in ghosts if x[2] == "Z"])
-		if s == len(ghosts):
+		steps += 1
+		move = 0 if moves[m] == "L" else 1
+		for g in range(len(ghosts)):
+			ghosts[g] = nodes[ghosts[g]][move]
+
+			if ghosts[g][2] == "Z":
+				if phases[g] == -1:
+					phases[g] = steps
+				elif freqs[g] == -1:
+					freqs[g] = steps - phases[g]
+
+		if -1 not in freqs:
 			break
 		
-	print(steps)
+		m = (m+1) % len(moves)
+	
+	print("Phases", phases)
+	print("Freqs ", freqs)
 
+	print(math.lcm(*freqs))
 
 
 def read_input(filename):
