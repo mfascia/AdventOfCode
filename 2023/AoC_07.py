@@ -78,30 +78,20 @@ def replace_jokers(cards):
 		for c in cards:
 			histogram[CARDPOS[c]] += 1
 
-		if 4 in histogram:
-			# 4 of a kind --> 5 of a kind
-			cards += cards[0]
-		elif 3 in histogram:
-			# 3 of a kind --> 4 or 5 of a kind
-			cards = orig.replace("J", CARDS[histogram.index(3)])
-		elif sum([1 if h == 2 else 0 for h in histogram ]) == 2:
-			# 2 pairs --> full house using the highest value
+		# Replace Jokers with the card with highest occurence.
+		# In case of 2 pairs, pick the card with highest value.
+		# In case of 5 jokers, replcae with 5 As.
+		if sum([1 if h == 2 else 0 for h in histogram ]) == 2:
 			v1 = histogram.index(2)
 			v2 = len(histogram) - histogram[::-1].index(2) - 1
 			if v1 > v2:
 				cards = orig.replace("J", CARDS[v1])
 			else:
 				cards = orig.replace("J", CARDS[v2])
-		elif 2 in histogram:
-			# 1 pair --> 3, 4 or 5 of a kind
-			cards = orig.replace("J", CARDS[histogram.index(2)])
-		elif 1 in histogram:
-			# best card --> 2, 3, 4 or 5 of a kind
-			p = len(histogram) - histogram[::-1].index(1) - 1
-			cards = orig.replace("J", CARDS[p])
-		else:
-			# 5 jokers --> AAAAA
+		elif cards == "":
 			cards = "AAAAA"
+		else:
+			cards = orig.replace("J", CARDS[histogram.index(max(histogram))])
 	
 	return cards
 
