@@ -34,6 +34,7 @@ VALID = {
 	".": []
  }
 
+
 NEIGHBOURS = [
 	[-1, 0],
 	[+1, 0],
@@ -65,16 +66,16 @@ def print_pipes(pipes):
 		print("".join(pipes[y]))
 
 
-def print_distancefield(pipes, caves, df, furthest):
+def print_distancefield(pipes, flood, df, furthest):
 	for y in range(len(df)):
 		line = ""
 		for x in range(len(df[0])):
 			d = df[y][x]
 			if d == -1:
-				if caves[y][x] == 0:
+				if flood[y][x] == 0:
 					line += "I"
-				else:
-					line += " "
+				elif flood[y][x] == 2:
+					line += "O"
 			elif d == furthest:
 				line += "@"
 			elif pipes[y][x] in ".S-|JL7F":
@@ -82,19 +83,16 @@ def print_distancefield(pipes, caves, df, furthest):
 		print(line)
 
 
-def floodfill(src, dst, w, h, x, y, valid, c):
+def floodfill(grid, w, h, x, y, valid, c):
 	queue = [(x, y)]
-	count = 0
 	while len(queue) > 0:
 		px, py = queue.pop()
-		if src[py][px] in valid and dst[py][px] != c:
-			dst[py][px] = c
-			count += 1
+		if grid[py][px] == valid and grid[py][px] != c:
+			grid[py][px] = c
 			neighbours = [tuple(n) for n in map(lambda k: (px+k[0], py+k[1]), NEIGHBOURS) if n[0]>=0 and n[0]<w and n[1]>=0 and n[1]<h]
 			for n in neighbours:
-				if dst[n[1]][n[0]] != c:
+				if grid[n[1]][n[0]] != c:
 					queue.append(n)
-	return count
 
 
 def explore(pipes, w, h, sx, sy):
@@ -104,6 +102,7 @@ def explore(pipes, w, h, sx, sy):
 	curr = (sx, sy)
 	next = (-1, -1)
 	looped = False
+	loop = []	
 	while not looped > 0:
 		for n in VALID[pipes[curr[1]][curr[0]]]:
 			next = (curr[0] + n[0], curr[1] + n[1])
@@ -121,34 +120,83 @@ def explore(pipes, w, h, sx, sy):
 				continue
 			elif next[1] == sy and next[0] == sx:
 				# reached the start, loop is complete
+				loop.append(curr)
 				looped = True
 				break
 			else:
 				df[next[1]][next[0]] = df[curr[1]][curr[0]] + 1
+				loop.append(curr)
 				prev = curr
 				curr = next
 				break
 
-	furthest = max(max(y) for y in df)
-	print("Part 1: furthest =", (furthest + 1)//2)
+	furthest = (max(max(y) for y in df) + 1) // 2
+	print("Part 1: furthest =", furthest)
+	
+	if isTest:
+		print()
 
-	flooded = [[0 for x in range(w)] for y in range(h)]
-	countDots = floodfill(pipes, flooded, w, h, 0, 0, ".", 1)
-	countPipes = floodfill(pipes, flooded, w, h, sx, sy, "S|-JL7F", 2)
+	zoomed = [[0 for x in range(3*w)] for y in range(3*h)]
+	for p in loop:
+		x = p[0]
+		y = p[1]
+		zx = x*3+1
+		zy = y*3+1
+		pipe = pipes[y][x] 
+		zoomed[zy][zx] = 1
+		if pipe == "S":
+			zoomed[zy-1][zx-1] = 1
+			zoomed[zy][zx-1] = 1
+			zoomed[zy+1][zx-1] = 1
+			zoomed[zy-1][zx] = 1
+			zoomed[zy+1][zx] = 1
+			zoomed[zy-1][zx+1] = 1
+			zoomed[zy][zx+1] = 1
+			zoomed[zy+1][zx+1] = 1
+		elif pipe == "|":
+			zoomed[zy-1][zx] = 1
+			zoomed[zy+1][zx] = 1
+		elif pipe == "-":
+			zoomed[zy][zx-1] = 1
+			zoomed[zy][zx+1] = 1
+		elif pipe == "J":
+			zoomed[zy][zx-1] = 1
+			zoomed[zy-1][zx] = 1
+		elif pipe == "L":
+			zoomed[zy][zx+1] = 1
+			zoomed[zy-1][zx] = 1
+		elif pipe == "7":
+			zoomed[zy][zx-1] = 1
+			zoomed[zy+1][zx] = 1
+		elif pipe == "F":
+			zoomed[zy][zx+1] = 1
+			zoomed[zy+1][zx] = 1
 
-	print("Part 2: caves area =", (w)*(h) - countDots - countPipes) 
-	print()
+	# (0, 0) is guaranteed to be outside as we pad the grid when parsing
+	floodfill(zoomed, w*3, h*3, 0, 0, 0, 2)
 
-	print_distancefield(pipes, flooded, df, furthest)
+	dezoomed = [[0 for x in range(w)] for y in range(h)]
 
-	return df
+	count = 0
+	for y in range(h):
+		for x in range(w):
+			dezoomed[y][x] = zoomed[3*y+1][3*x+1]
+			if dezoomed[y][x] == 0:
+				count +=1 
+
+	if isTest:
+		print_distancefield(pipes, dezoomed, df, furthest)
+
+	print("Part 2: caves = ", count)
+
 
 def main(inp):
 	width, height, pipes, sx, sy = parse_pipes(inp)
-	print_pipes(pipes)
+	if isTest:
+		print_pipes(pipes)
 
 	if sx != -1 and sy != -1:
-		df = explore(pipes, width, height, sx, sy)
+		explore(pipes, width, height, sx, sy)
 
 
 def main_2(inp):
