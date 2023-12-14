@@ -126,6 +126,7 @@ def parse_records(text):
 		records.append([springs, groups])
 	return records
 
+
 def main_1(inp):
 	sum = 0
 	records = parse_records(inp)
