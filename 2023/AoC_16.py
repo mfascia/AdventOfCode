@@ -14,7 +14,7 @@ isTest = False
 doTests = True
 doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
@@ -77,6 +77,12 @@ class Grid:
 			print("active beams =", active)
 		
 		return active > 0
+
+
+	def simulate(self):
+		while True:
+			if not self.tick():
+				break
 
 
 	def count_lava(self):
@@ -173,16 +179,39 @@ def main_1(inp):
 	grid = Grid(inp)
 
 	grid.beams = [Beam(0, 0, 1, 0)]
-
-	while True:
-		if not grid.tick():
-			break
-
+	grid.simulate()
 	print("Lava =", grid.count_lava())
 		
 
 def main_2(inp):
-	pass
+	maxLava = 0
+	grid = Grid(inp)
+
+	for x in range(grid.width):
+		if grid.floor[0][x] == ".":
+			grid.reset()
+			grid.beams = [Beam(x, 0, 0, 1)]
+			grid.simulate()
+			maxLava = max(maxLava, grid.count_lava())
+		if grid.floor[grid.height-1][x] == ".":
+			grid.reset()
+			grid.beams = [Beam(x, grid.height-1, 0, -1)]
+			grid.simulate()
+			maxLava = max(maxLava, grid.count_lava())
+
+	for y in range(grid.height):
+		if grid.floor[y][0] == ".":
+			grid.reset()
+			grid.beams = [Beam(0, y, 1, 0)]
+			grid.simulate()
+			maxLava = max(maxLava, grid.count_lava())
+		if grid.floor[y][grid.width-1] == ".":
+			grid.reset()
+			grid.beams = [Beam(grid.width-1, y, -1, 0)]
+			grid.simulate()
+			maxLava = max(maxLava, grid.count_lava())
+
+	print("Lava =", maxLava)
 
 
 def read_input(filename):
