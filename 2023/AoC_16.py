@@ -18,16 +18,34 @@ enablePart2 = False
 #-----------------------------------------------------------------------------------------------
 
 
-def parse_grid(text):
-	grid = []
-	for line in text:
-		grid.append([x for x in line])
-	return grid, len(grid[0]), len(grid)
-
-
+def direction(x, y):
+	if x == 0 and y == 1:
+		return 1
+	elif x == 0 and y == -1:
+		return 2
+	elif x == 1 and y == 0:
+		return 4
+	elif x == -1 and y == 0:
+		return 3
 
 
 class Grid:
+	def reset(self):
+		self.lava = [ ["." for x in range(self.width)] for y in range(self.height)]
+
+		self.mirrors = {}
+		for y in range(self.height):			#	0	  1  2  3  4 
+			for x in range(self.width):			#   type, U, D, L, R
+				if self.floor[y][x] == "/":
+					self.mirrors[tuple([x, y])] = ["/", 1, 1, 1, 1]
+				elif self.floor[y][x] == "\\":
+					self.mirrors[tuple([x, y])] = ["\\", 1, 1, 1, 1]
+				elif self.floor[y][x] == "|":
+					self.mirrors[tuple([x, y])] = ["|", 1, 1, 0, 0]
+				elif self.floor[y][x] == "-":
+					self.mirrors[tuple([x, y])] = ["-", 0, 0, 1, 1]
+
+
 	def __init__(self, text):
 		self.floor = []
 		for line in text:
@@ -36,9 +54,7 @@ class Grid:
 		self.width = len(self.floor[0])
 		self.height = len(self.floor)
 
-		self.lava = [ ["." for x in range(self.width)] for y in range(self.height)]
-
-		self.beams = [Beam(0, 0, 1, 0, set())]
+		self.reset()
 
 
 	def tick(self):
@@ -100,26 +116,17 @@ class Grid:
 
 
 class Beam:
-	def __init__(self, x, y, dx, dy, history):
+	def __init__(self, x, y, dx, dy):
 		self.x = x
 		self.y = y
 		self.dx = dx
 		self.dy = dy
-		self.history = set(copy.deepcopy(history))
 		self.active = True
 
 
 	def step(self, grid):
 		if not self.active:
 			return
-		
-		h = self.x * 100000000 + self.y * 10000 + self.dx * 10 + self.dy
-		
-		if h in self.history:
-			self.active = False
-			return
-		else:
-			self.history.add(h)
 		
 		c = grid.floor[self.y][self.x]
 
@@ -137,11 +144,18 @@ class Beam:
 			elif c == "|" and self.dx != 0:
 				self.dx = 0
 				self.dy = 1
-				split = Beam(self.x, self.y, 0, -1, [h for h in self.history])
+				split = Beam(self.x, self.y, 0, -1)
 			elif c == "-" and self.dy != 0:
 				self.dx = 1
 				self.dy = 0
-				split = Beam(self.x, self.y, -1, 0, [h for h in self.history])
+				split = Beam(self.x, self.y, -1, 0)
+
+			mirror = grid.mirrors[tuple([self.x, self.y])]
+			dir = direction(self.dx, self.dy)
+			if mirror[dir] == 1:
+				mirror[dir] = 0
+			else:
+				self.active = False
 
 		self.x = self.x + self.dx
 		self.y = self.y + self.dy
@@ -157,6 +171,8 @@ class Beam:
 
 def main_1(inp):
 	grid = Grid(inp)
+
+	grid.beams = [Beam(0, 0, 1, 0)]
 
 	while True:
 		if not grid.tick():
