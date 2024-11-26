@@ -11,9 +11,9 @@ inp = ""
 isTest = False
 
 doTests = True
-doInput = False
+doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
@@ -45,14 +45,14 @@ class Vector:
 		if self.x < bmin.x:
 			self.x = bmin.x
 			clipped = True
-		if self.x >= bmin.x:
-			self.x = bmin.x-1
+		if self.x >= bmax.x:
+			self.x = bmax.x-1
 			clipped = True
 		if self.y < bmin.y:
 			self.y = bmin.y
 			clipped = True
-		if self.y >= bmin.y:
-			self.y = bmin.y-1
+		if self.y >= bmax.y:
+			self.y = bmax.y-1
 			clipped = True
 		return clipped
 	
@@ -60,18 +60,93 @@ class Vector:
 		return Vector(list[0], list[1])
 
 
+DIRS = {
+	"U": Vector( 0, -1),
+	"D": Vector( 0, 1),
+	"L": Vector(-1,  0),
+	"R": Vector( 1,  0),
+}
+
 def main_1(inp):
-	a = Vector(1, 2)
-	b = 3*a
-	print(a, b)
-	print(b-a)
-	c = Vector.from_list([5, 6])
-	print(c)
-	pass
+
+	bbmin = Vector()
+	bbmax = Vector()
+
+	count = 0
+
+	# Extract bounds
+	digger = Vector(0, 0)
+	for line in inp:
+		dir, length, color = line.split(" ")
+	
+		for i in range(int(length)):
+			v = Vector(digger.x + DIRS[dir].x, digger.y + DIRS[dir].y)
+			digger = v
+			bbmin.x = min(bbmin.x, v.x)
+			bbmin.y = min(bbmin.y, v.y)
+			bbmax.x = max(bbmax.x, v.x)
+			bbmax.y = max(bbmax.y, v.y)
+
+	bbmax.x += 1
+	bbmax.y += 1
+	
+	# Create grid
+	grid = [ ["." for x in range(bbmin.x, bbmax.x)] for y in range(bbmin.y, bbmax.y)]
+
+	# Dig Edges
+	digger = Vector(0, 0)
+	for line in inp:
+		dir, length, color = line.split(" ")
+		color = color[2:-1]
+		for i in range(int(length)):
+			v = Vector(digger.x + DIRS[dir].x, digger.y + DIRS[dir].y)
+			digger = v
+			grid[digger.y-bbmin.y][digger.x-bbmin.x] = "#"
+			count += 1
+
+	# Flood fill
+	start = Vector(1-bbmin.x, 1-bbmin.y)
+	toCheck = [start]
+
+	while toCheck:
+		v = toCheck.pop()
+		if grid[v.y][v.x] == ".":
+			grid[v.y][v.x] = "O"
+			count += 1
+			for d in DIRS.values():
+				nv = v + d
+				if not nv.clip(Vector(0, 0), bbmax-bbmin):
+					toCheck.append(nv)
+
+	# y = 0
+	# for row in grid:
+	# 	print(y , "".join(row))
+	# 	y += 1
+	print(count)
 
 
 def main_2(inp):
-	pass
+	corners = []
+	v = Vector()
+	corners.append(v)
+	for line in inp:
+		_, _, color = line.split(" ")
+		dir = "RDLU"[int(color[7])]
+		length = int("0x" + color[2:-2], 16)
+		nv = Vector(v.x + DIRS[dir].x*length, v.y + DIRS[dir].y*length)
+		v = nv
+		corners.append(v)
+
+	a = 0
+	p = 0
+	for c in range(len(corners)-1):
+		c1 = corners[c]
+		c2 = corners[c+1]
+		det = c1.x*c2.y - c1.y*c2.x
+		a += det
+		p += abs(c2.x - c1.x) + abs(c2.y - c1.y)
+
+	print(int(a/2)+int(p/2)+1)
 
 
 def read_input(filename):
