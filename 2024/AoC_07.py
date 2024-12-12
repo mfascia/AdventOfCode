@@ -11,16 +11,18 @@ inp = ""
 isTest = False
 
 doTests = True
-doInput = False
+doInput = True
 enablePart1 = True
 enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
-def eval(target, lhs, rhs):
+def eval(target, lhs, rhs, concat):
 	if len(rhs) == 0:
 		return lhs == target
 	elif len(rhs) == 1:
-		if lhs + rhs[0] == target:
+		if concat and int(str(lhs) + str(rhs[0])) == target:
+			return True
+		elif lhs + rhs[0] == target:
 			return True
 		elif lhs * rhs[0] == target:
 			return True
@@ -29,10 +31,12 @@ def eval(target, lhs, rhs):
 	else:
 		v = rhs[0]
 		rhs = rhs[1:]
-		if eval(target, lhs + v, rhs):
+		if concat and eval(target, int(str(lhs) + str(v)), rhs, concat):
+			return True
+		elif eval(target, lhs + v, rhs, concat):
 			return True
 		else:
-			return eval(target, lhs * v, rhs)
+			return eval(target, lhs * v, rhs, concat)
 
 
 def main_1(inp):
@@ -42,10 +46,11 @@ def main_1(inp):
 		result = int(result)
 		args = [int(x) for x in rhs.split(" ")]
 
-		if eval( result, args[0], args[1:]):
+		if eval( result, args[0], args[1:], False):
 			sum += result
 
 	print(sum)
+
 
 
 def main_2(inp):
@@ -54,6 +59,9 @@ def main_2(inp):
 		result, rhs = line.split(": ")
 		result = int(result)
 		args = [int(x) for x in rhs.split(" ")]
+
+		if eval( result, args[0], args[1:], True):
+			sum += result
 
 	print(sum)
 
