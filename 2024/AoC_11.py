@@ -42,17 +42,6 @@ def main_1(inp):
 	print(len(stones))
 
 
-def fast_blink_stone(stone, iter):
-	input = [stone]
-	while iter > 0:
-		output = []
-		iter = max(0, iter-5)
-		print("iter:", iter)
-		for i in range(iter):
-			output += blinks(input, 5)
-		input = output
-
-
 def blink_recursive(stone, iter, i=0, cache={}):
 	count = 0
 	if i == iter:
