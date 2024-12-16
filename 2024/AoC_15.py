@@ -1,5 +1,8 @@
 import os
 import sys
+import tempfile
+from PIL import Image, ImageDraw
+import moviepy.video.io.ImageSequenceClip
 import AoC as aoc
 
 
@@ -10,6 +13,8 @@ import AoC as aoc
 tests = []
 inp = ""
 isTest = False
+
+doVideo = False	# careful, the video will take a long time to generate here!
 
 doTests = True
 doInput = True	
@@ -60,7 +65,7 @@ def expand(grid):
 
 
 def print_grid(grid, robot):
-	for y in range(len(grid)	):
+	for y in range(len(grid)):
 		txt = ""
 		for x in range(len(grid[0])):
 			if robot == aoc.Vector(x, y):
@@ -186,15 +191,63 @@ def step2(grid, robot, dir):
 			return robot
 
 
+def generateFrame(frameNum, grid, robot):
+	sp = 10
+	sx = len(grid[0])
+	sy = len(grid)
+	
+	im = Image.new(mode="RGB", size=(sx*sp, sy*sp))	
+	draw = ImageDraw.Draw(im)
+
+	for y in range(sy):
+		for x in range(sx):
+			if grid[y][x] == "#":
+				draw.rectangle((x*sp + 1, y*sp + 1, x*sp + sp - 1, y*sp + sp - 1), (200, 200, 200) )
+			elif grid[y][x] == "[":
+				draw.rectangle((x*sp + 1, y*sp + 1, x*sp + sp, y*sp + sp - 1), (200, 120, 0) )
+			elif grid[y][x] == "]":
+				draw.rectangle((x*sp, y*sp + 1, x*sp + sp - 1, y*sp + sp - 1), (200, 120, 0) )
+	
+	draw.ellipse((robot.x*sp + 1, robot.y*sp + 1, robot.x*sp + sp - 1, robot.y*sp + sp - 1), (0, 255, 127) )
+	
+	return im
+
+
 def main_2(inp):
 	grid, robot, moves = parse(inp)
 	grid = expand(grid)
 	robot.x *= 2
+
 	# print_grid(grid, robot)
+
+	if doVideo and not isTest:
+		frames = []
+		f = 0
+		frames.append(generateFrame(f, grid, robot))
+
 	for m in moves:
 		robot = step2(grid, robot, m)
+		if doVideo and not isTest:
+			f += 1
+			frames.append(generateFrame(f, grid, robot))
+
 	# print_grid(grid, robot)
 	print("gps:", gps(grid))
+
+	if doVideo and not isTest:
+		tempDirName = sys.argv[0].split("\\")[-1].replace(".py", "")
+		tempDirName += "_input"
+		base = tempfile.mkdtemp(prefix=tempDirName)
+		prefix = base + "\\AoC-2024-15"
+		print("Image and video here:", base)
+		for f in range(len(frames)):
+			frames[f].save(prefix + "{:06d}".format(f) + ".png")
+		fps=60
+		image_files = [os.path.join(base,img)
+					for img in os.listdir(base)
+					if img.endswith(".png")]
+		clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files, fps=fps)
+		clip.write_videofile(sys.argv[0].replace(".py", "_input.mp4"))
 
 
 def read_input(filename):
