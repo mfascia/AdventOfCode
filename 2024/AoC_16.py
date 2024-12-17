@@ -1,5 +1,6 @@
 import os
 import sys
+import queue
 
 import AoC as aoc
 
@@ -52,6 +53,13 @@ def main_1(inp):
 	maze, bounds, start, end = parse(inp)
 	path = [[start, "S"], [end, "E"]]
 	print_maze(maze, bounds, path)
+
+	open = queue.PriorityQueue()
+	closed = {}
+
+	
+
+
 
 
 def main_2(inp):
