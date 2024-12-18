@@ -1,10 +1,10 @@
 import os
 import sys
 import queue
+import time
+from collections import defaultdict
 
 import AoC as aoc
-
-
 
 
 # GLOBALS --------------------------------------------------------------------------------------
@@ -16,15 +16,40 @@ inp = ""
 isTest = False
 
 doTests = True
-doInput = False
-enablePart1 = False
+doInput = True
+enablePart1 = True
 enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
-def vector_less_than(a, b):
-	return a.x < b.x
 
-aoc.Vector.__lt__ = vector_less_than
+MAX_COST = 100000000
+
+ARROWS = {
+	aoc.Vector(1, 0): ">",
+	aoc.Vector(-1, 0): "<",
+	aoc.Vector(0, 1): "v",
+	aoc.Vector(0, -1): "^"
+}
+
+
+def print_maze(maze, bounds, start, end, path=[], drawArrows=True):
+	txt = []
+	for row in maze:
+		txt.append("".join(row))
+
+	for p in range(len(path)-1):
+		if drawArrows:
+			c = ARROWS[path[p+1]-path[p]] 
+		else:
+			c = "O"
+		txt[path[p].y] = txt[path[p].y][:path[p].x] + c + txt[path[p].y][path[p].x+1:]
+
+	txt[start.y] = txt[start.y][:start.x] + "S" + txt[start.y][start.x+1:]
+	txt[end.y] = txt[end.y][:end.x] + "E" + txt[end.y][end.x+1:]
+
+	for row in txt:
+		print(row)
+	print()
 
 
 def parse(inp):
@@ -44,110 +69,96 @@ def parse(inp):
 	return maze, [aoc.Vector(), aoc.Vector(width, height)], start, end
 
 
-TDIR = {
-	aoc.Vector(1, 0): ">",
-	aoc.Vector(-1, 0): "<",
-	aoc.Vector(0, 1): "v",
-	aoc.Vector(0, -1): "^"
-}
-
-def print_maze(maze, bounds, path=[]):
-	txt = []
-	for row in maze:
-		txt.append("".join(row))
-
-	for p in range(len(path)):
-		if p == 0:
-			c = "S"
-		elif p == len(path)-1:
-			c = "E"
+def neighbours(maze, bounds, pos, dir, cost):
+	ret = []
+	for ndir in aoc.ADJ_4:
+		npos = pos + ndir
+		if not npos.is_inside(*bounds) or maze[npos.y][npos.x] == "#":
+			continue
+		if ndir != dir:
+			ret.append((npos, ndir, cost + 1000 + 1))
 		else:
-			c = TDIR[path[p+1]-path[p]]
-		txt[path[p].y] = txt[path[p].y][:path[p].x] + c + txt[path[p].y][path[p].x+1:]
-
-	for row in txt:
-		print(row)
-
-
-def unroll_path(pred, pos):
-	path = []
-	score = 0
-	while pos:
-		path.append(pos)
-		pos = pred[pos]
-	path.reverse()
-	return path, score
+			ret.append((npos, ndir, cost + 1))
+	return ret
 
 
 def main_1(inp):
 	maze, bounds, start, end = parse(inp)
-	print_maze(maze, bounds)
 
-	open = queue.PriorityQueue()
-	cost = { start: 0 }
-	pred = { start: None }
-	open.put((0, (start, aoc.Vector(1, 0))))
-
-	aoc.Vector.__lt__ = less
-
+	# Uses a simple Djikstra search. 
+	# 	For each node being evaluated, it builds the path so far and pushes it on the queue
+	# 	Cost is recorded per position without considering orientation
+	#	Search ends when a path is found, as it is guaranteed to be (one of) the most optimal 
+	# 						(they can be several of same cost, which is what part 2 is about)
 	path = []
+	open = queue.PriorityQueue()
+	costs = defaultdict(lambda:MAX_COST)
+	costs[start] = 0
+	open.put((0, (start, aoc.Vector(1, 0)), []))
+
 	score = 0
 	while not open.empty():
 		loc = open.get()
-		pos = loc[1][0]
-		dir = loc[1][1]
+		cost, pos, dir, path = loc[0], *loc[1], loc[2]
 
 		if pos == end:
-			path, score = unroll_path(pred, pos)
+			score = cost
 			break
 
-		for ndir in aoc.ADJ_4:
-			npos = pos + ndir
-			if not npos.is_inside(*bounds) or maze[npos.y][npos.x] == "#":
-				continue
-			if ndir != dir:
-				ncost = cost[pos] + 1000 + 1
-			else:
-				ncost = cost[pos] + 1
+		costs[pos] = cost
+
+		for npos, ndir, ncost in neighbours(maze, bounds, pos, dir, costs[pos]):
+			if ncost < costs[npos]:
+				tup = (ncost, (npos, ndir), path + [npos])
+				open.put(tup)
 	
-			if not npos in cost or (ncost + h) < cost[npos]:
-				pred[npos] = pos
-				cost[npos] = ncost
-				h = abs(end.x-npos.x) + abs(end.y-npos.y)
-				tup = (ncost+h, (npos, ndir))
-				if not tup in open.queue:
-					open.put(tup)
-	
-	print_maze(maze, bounds, path)
+	# print_maze(maze, bounds, start, end, path)
 	print("score:", score)
-
-
-def search_rec(maze, bounds, end, pos, hitcount = {}, visited = [], path = []):
-	visited.append(pos)
-	if pos == end:
-		for p in path:
-			if p in hitcount:
-				hitcount[p] += 1
-			else:
-				hitcount[p] = 1
-		print("reached target")
-	else:
-		for ndir in aoc.ADJ_4:
-			npos = pos + ndir
-			if not npos.is_inside(*bounds) or maze[npos.y][npos.x] == "#" or npos in visited:
-				continue
-			search_rec(maze, bounds, end, npos, hitcount, visited, path + [npos])
-	visited.pop()
 
 
 def main_2(inp):
 	maze, bounds, start, end = parse(inp)
-	print_maze(maze, bounds)
 
-	hitcount = {}
-	search_rec(maze, bounds, end, start, hitcount)
-	print(hitcount)
+	# Uses a modified Djikstra that will not stop after finding a path, but instead will continue 
+	# with the same cost. 
+	# For that, we keep track of the lowest cost of each positio and direction of travel
+	t0 = time.time()
+	open = queue.PriorityQueue()
+	ss = (start, aoc.Vector(1, 0))
+	costs = defaultdict(lambda: MAX_COST)
+	costs[ss] = 0
+	open.put((0, ss, [start]))
 	
+	best = MAX_COST
+	paths = []
+
+	while not open.empty():
+		loc = open.get()
+		cost, pos, dir, path = loc[0], *loc[1], loc[2]
+
+		if cost > best:
+			continue
+
+		costs[(pos, dir)] = cost
+
+		if pos == end:
+			best = cost
+			paths.append(path)
+
+		for npos, ndir, ncost in neighbours(maze, bounds, pos, dir, costs[(pos, dir)]):
+			if not npos in path and ncost < costs[(npos, ndir)]:
+				tup = (ncost, (npos, ndir), path + [npos])
+				open.put(tup)
+	
+	pts = set()
+	for path in paths:
+		for p in path:
+			pts.add(p)
+	# print_maze(maze, bounds, start, end, [x for x in pts], False)
+	t1 = time.time()
+	print("(took", t1-t0, "seconds)")
+	print(len(pts))
+
 
 def read_input(filename):
 	with open(filename, "r") as f:
