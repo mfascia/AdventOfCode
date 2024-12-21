@@ -24,11 +24,17 @@ class Vector:
 	def __eq__(self, other):
 		return self.x == other.x and self.y == other.y
 
+	def __lt__(self, other):
+		return (self.x, self.y) < (other.x, other.y)
+
 	def __repr__(self):
 		return "(" + str(self.x) + ", " + str(self.y) + ")"
 	
 	def __hash__(self):
 		return hash(self.x) + hash(self.y)
+	
+	def manatthan(self, other):
+		return abs(other.x-self.x) + abs(other.y-self.y)
 
 	# Clips against bmin (inclusive) and bmax (exclusive)
 	def clip(self, bmin, bmax):  
@@ -59,7 +65,7 @@ class Vector:
 		for a in points:
 			n = self+a
 			if bmin and bmax:
-				if self.clip(bmin, bmax):
+				if n.is_inside(bmin, bmax):
 					neigh.append(n)
 			else:
 				neigh.append(n)
