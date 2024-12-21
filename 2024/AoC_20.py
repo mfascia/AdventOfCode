@@ -17,7 +17,7 @@ isTest = False
 doTests = True
 doInput = True
 enablePart1 = True
-enablePart2 = False
+enablePart2 = True
 #-----------------------------------------------------------------------------------------------
 
 
@@ -76,6 +76,11 @@ def expand(points, exclude=[]):
 	return expanded
 
 
+# Naive approach that worked for part1 but not part2.
+# It simply removes each vertical or horizontal wall one by one and calculates 
+# the saving if we managed to connect 2 portions of the path.
+# Works and is fast (after optimizing the path datastructure from a list to a dict)
+# but only really works for walls of thickness 1..
 def find_cheats(grid, bounds, path):
 	cheats = defaultdict(lambda:[])
 	for y in range(1, bounds[1].y-1):
@@ -94,6 +99,22 @@ def find_cheats(grid, bounds, path):
 	return cheats
 
 
+# This tries to find if the path that remains after the current path point ends up closer 
+# than the cheat radius (using manatthan distances). 
+# This is slower as it has a O(nb_path_points^2) but can deal with any arbitrary cheat duration
+def find_cheats2(grid, bounds, pathdict, radius):
+	cheats = defaultdict(lambda:[])
+	path = [x for x in pathdict.keys()]
+	for i, p in enumerate(path):
+		if i % 100 == 0:
+			print(i, "/", len(path))
+		for j in range(i+2,len(path)):
+			d = p.manatthan(path[j]) 
+			if d <= radius and j>i+d:
+				cheats[j-i-d].append((i, j))
+	return cheats
+
+
 def main_1(inp):
 	grid, bounds, start, end = parse_grid(inp)
 	track = find_track(grid, bounds, start, end)
@@ -108,7 +129,18 @@ def main_1(inp):
 
 
 def main_2(inp):
-	pass
+	grid, bounds, start, end = parse_grid(inp)
+	track = find_track(grid, bounds, start, end)
+	if isTest:
+		print_grid(grid, bounds, start, end, track)
+		cheats = find_cheats2(grid, bounds, track, 20)
+	else:
+		cheats = find_cheats2(grid, bounds, track, 20)
+	count = 0
+	for k, v in cheats.items():
+		if k >= 100:
+			count += len(v)
+	print(count, "save at least 100 picoseconds.")
 
 
 def read_input(filename):
