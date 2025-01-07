@@ -32,6 +32,9 @@ class Vector:
 	
 	def __hash__(self):
 		return hash(self.x) + hash(self.y)
+	
+	def manatthan(self, other):
+		return abs(other.x-self.x) + abs(other.y-self.y)
 
 	# Clips against bmin (inclusive) and bmax (exclusive)
 	def clip(self, bmin, bmax):  
@@ -62,7 +65,7 @@ class Vector:
 		for a in points:
 			n = self+a
 			if bmin and bmax:
-				if self.clip(bmin, bmax):
+				if n.is_inside(bmin, bmax):
 					neigh.append(n)
 			else:
 				neigh.append(n)
